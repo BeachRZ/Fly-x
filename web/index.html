@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FLY X · a real fly brain flies the rocket</title>
+<link rel="stylesheet" href="css/space.css">
+<script type="importmap">
+{ "imports": {
+	"three": "./vendor/three/three.module.js",
+	"three/addons/": "./vendor/three/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<header id="brand">
+	<div class="logo">FLY<b>X</b></div>
+	<div class="mission">
+		<div><span id="levelTag" class="tag">LEVEL 1</span> <span id="missionTitle">—</span></div>
+		<div id="pilotLabel" class="sub">—</div>
+	</div>
+</header>
+
+<div id="live"><i></i><span id="liveTxt">REPLAY</span></div>
+<div id="score"></div>
+
+<nav id="controls">
+	<select id="missionSel"></select>
+	<button id="play" title="pause (space)">❚❚</button>
+	<button data-speed="1" class="on">1×</button>
+	<button data-speed="2">2×</button>
+	<button data-speed="4">4×</button>
+	<button id="restart" title="replay">↺</button>
+	<span class="sep"></span>
+	<button data-cam="chase" class="on">outside</button>
+	<button data-cam="pilot">pilot's eyes</button>
+	<button data-cam="cockpit">cockpit</button>
+	<button data-cam="cabin">cabin</button>
+	<button data-cam="landing">landing</button>
+	<button data-cam="overview">map</button>
+	<span class="sep"></span>
+	<label title="the director switches cameras for you"><input type="checkbox" id="director" checked> director</label>
+	<label><input type="checkbox" id="auto" checked> autoplay</label>
+	<span class="sep"></span>
+	<button id="sound" class="on">sound</button>
+	<button id="rulesBtn">rules</button>
+</nav>
+
+<section id="rules" hidden>
+	<div class="ph">FLIGHT RULES</div>
+	<dl>
+		<dt>pilot</dt><dd>a model of a fly's brain, MaleCNS: 166,700 neurons, 25.6 million synapses. It sees only the window frame — the picture its 3,335 photoreceptors receive.</dd>
+		<dt>lever</dt><dd>right DNp20 neuron minus left. On the way out the lever turns the rocket; in the landing it moves the rocket sideways. Nothing else steers.</dd>
+		<dt>computer</dt><dd>throttle, the flip engines-first, braking, descent rate, and near the ground a limit on sideways speed. It never knows where the target or the pad is.</dd>
+		<dt>world</dt><dd>the same rules for every flight of a level. The mission number only picks where the rocks, the meteors and the pad are.</dd>
+		<dt>touchdown</dt><dd>sensors on the legs drive 2,522 leg mechanosensory neurons of the fly; the brain's answer goes into the log.</dd>
+		<dt>control</dt><dd>the same brain with the window painted over. The blind fly never lands — so it is vision that steers.</dd>
+		<dt>check</dt><dd>every flight is deterministic: the same level and number give the same flight to anyone who runs the code.</dd>
+	</dl>
+</section>
+
+<aside id="eyePanel">
+	<div class="tabs">
+		<button data-panel="eye" class="on">PILOT'S EYE</button>
+		<button data-panel="brain">BRAIN</button>
+		<span id="gain"></span>
+	</div>
+	<canvas id="eye"></canvas>
+	<canvas id="brainCanvas" hidden></canvas>
+	<div class="note" id="panelNote">this frame goes into the fly's 3,335 photoreceptors. Only its brain steers.</div>
+	<div class="ph">STEERING NEURONS</div>
+	<div class="neuron"><span>DNp20 left</span><i><b id="barL"></b></i><em id="hzL">0</em></div>
+	<div class="neuron"><span>DNp20 right</span><i><b id="barR"></b></i><em id="hzR">0</em></div>
+	<div class="lever"><span>◀</span><div class="track"><b id="leverKnob"></b></div><span>▶</span></div>
+	<div id="leverTxt" class="note c">lever: centred</div>
+</aside>
+
+<section id="log">
+	<div class="ph">FLIGHT LOG</div>
+	<ol></ol>
+</section>
+
+<footer id="hud">
+	<div class="gauges">
+		<div class="g"><canvas class="gauge" id="gSpeed" width="136" height="136"></canvas><div class="gl">SPEED</div></div>
+		<div class="g"><canvas class="gauge" id="gAlt" width="136" height="136"></canvas><div class="gl" id="altLbl">ALTITUDE</div></div>
+	</div>
+	<div class="center">
+		<div id="stage">—</div>
+		<div id="clock">T− 00:00:01</div>
+		<div id="timeline"><div class="tl-line"><b id="tlFill"></b></div></div>
+		<div id="details">—</div>
+	</div>
+	<div class="gauges right">
+		<div class="g"><canvas class="gauge" id="gG" width="136" height="136"></canvas><div class="gl">G-FORCE</div></div>
+		<div class="g"><canvas class="gauge" id="gFuel" width="136" height="136"></canvas><div class="gl">FUEL</div></div>
+	</div>
+</footer>
+
+<div id="banner" hidden>
+	<div class="title" id="bannerTitle"></div>
+	<div class="cause" id="bannerCause"></div>
+</div>
+
+<div id="crewNote">passengers are the top-10 holders (demo addresses). They have no brain and no effect on the flight.</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

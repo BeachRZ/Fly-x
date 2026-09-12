@@ -1,0 +1,222 @@
+[
+ {
+  "id": "fly-L1-s1",
+  "mode": "fly",
+  "level": 1,
+  "target": "Moon",
+  "seed": 1,
+  "outcome": "collision",
+  "landed": false,
+  "on_pad": false,
+  "t": 12.46
+ },
+ {
+  "id": "fly-L1-s2",
+  "mode": "fly",
+  "level": 1,
+  "target": "Moon",
+  "seed": 2,
+  "outcome": "landed_off",
+  "landed": true,
+  "on_pad": false,
+  "t": 37.14
+ },
+ {
+  "id": "fly-L1-s3",
+  "mode": "fly",
+  "level": 1,
+  "target": "Moon",
+  "seed": 3,
+  "outcome": "landed",
+  "landed": true,
+  "on_pad": true,
+  "t": 36.8
+ },
+ {
+  "id": "fly-L1-s4",
+  "mode": "fly",
+  "level": 1,
+  "target": "Moon",
+  "seed": 4,
+  "outcome": "collision",
+  "landed": false,
+  "on_pad": false,
+  "t": 22.69
+ },
+ {
+  "id": "fly-L1-s5",
+  "mode": "fly",
+  "level": 1,
+  "target": "Moon",
+  "seed": 5,
+  "outcome": "landed",
+  "landed": true,
+  "on_pad": true,
+  "t": 37.57
+ },
+ {
+  "id": "fly-L1-s6",
+  "mode": "fly",
+  "level": 1,
+  "target": "Moon",
+  "seed": 6,
+  "outcome": "landed_off",
+  "landed": true,
+  "on_pad": false,
+  "t": 37.23
+ },
+ {
+  "id": "fly-L1-s7",
+  "mode": "fly",
+  "level": 1,
+  "target": "Moon",
+  "seed": 7,
+  "outcome": "tipped",
+  "landed": false,
+  "on_pad": false,
+  "t": 37.23
+ },
+ {
+  "id": "fly-L1-s8",
+  "mode": "fly",
+  "level": 1,
+  "target": "Moon",
+  "seed": 8,
+  "outcome": "collision",
+  "landed": false,
+  "on_pad": false,
+  "t": 12.89
+ },
+ {
+  "id": "fly-L1-s9",
+  "mode": "fly",
+  "level": 1,
+  "target": "Moon",
+  "seed": 9,
+  "outcome": "landed_off",
+  "landed": true,
+  "on_pad": false,
+  "t": 37.91
+ },
+ {
+  "id": "fly-L1-s10",
+  "mode": "fly",
+  "level": 1,
+  "target": "Moon",
+  "seed": 10,
+  "outcome": "landed_off",
+  "landed": true,
+  "on_pad": false,
+  "t": 38.0
+ },
+ {
+  "id": "fly-L1-s11",
+  "mode": "fly",
+  "level": 1,
+  "target": "Moon",
+  "seed": 11,
+  "outcome": "tipped",
+  "landed": false,
+  "on_pad": false,
+  "t": 36.71
+ },
+ {
+  "id": "fly-L1-s12",
+  "mode": "fly",
+  "level": 1,
+  "target": "Moon",
+  "seed": 12,
+  "outcome": "landed",
+  "landed": true,
+  "on_pad": true,
+  "t": 36.54
+ },
+ {
+  "id": "blind-L1-s1",
+  "mode": "blind",
+  "level": 1,
+  "target": "Moon",
+  "seed": 1,
+  "outcome": "lost",
+  "landed": false,
+  "on_pad": false,
+  "t": 70.0
+ },
+ {
+  "id": "blind-L1-s2",
+  "mode": "blind",
+  "level": 1,
+  "target": "Moon",
+  "seed": 2,
+  "outcome": "lost",
+  "landed": false,
+  "on_pad": false,
+  "t": 70.0
+ },
+ {
+  "id": "blind-L1-s3",
+  "mode": "blind",
+  "level": 1,
+  "target": "Moon",
+  "seed": 3,
+  "outcome": "lost",
+  "landed": false,
+  "on_pad": false,
+  "t": 70.0
+ },
+ {
+  "id": "fly-L2-s1",
+  "mode": "fly",
+  "level": 2,
+  "target": "Mars",
+  "seed": 1,
+  "outcome": "landed",
+  "landed": true,
+  "on_pad": true,
+  "t": 56.17
+ },
+ {
+  "id": "fly-L2-s2",
+  "mode": "fly",
+  "level": 2,
+  "target": "Mars",
+  "seed": 2,
+  "outcome": "collision",
+  "landed": false,
+  "on_pad": false,
+  "t": 22.06
+ },
+ {
+  "id": "fly-L2-s3",
+  "mode": "fly",
+  "level": 2,
+  "target": "Mars",
+  "seed": 3,
+  "outcome": "tipped",
+  "landed": false,
+  "on_pad": false,
+  "t": 56.6
+ },
+ {
+  "id": "blind-L2-s1",
+  "mode": "blind",
+  "level": 2,
+  "target": "Mars",
+  "seed": 1,
+  "outcome": "lost",
+  "landed": false,
+  "on_pad": false,
+  "t": 95.03
+ },
+ {
+  "id": "blind-L2-s2",
+  "mode": "blind",
+  "level": 2,
+  "target": "Mars",
+  "seed": 2,
+  "outcome": "lost",
+  "landed": false,
+  "on_pad": false,
+  "t": 95.03
+ }
+]
