@@ -443,7 +443,19 @@ export function createRocket(scene, passengers = []) {
 	}
 	function setVisible(v) { root.visible = v; }
 
-	return { root, hull, update, drawScreens, setEyeCanvas, eyeUpdated, local, axis, rig, pilotView, setCameraMode, setVisible, pilot };
+	/* The passenger list belongs to the flight, not to the page: every mission
+	 * carries the holders as they were when it was published, so a replay shows
+	 * who was aboard then rather than who holds the token now. */
+	function setCrew(list) {
+		crew.forEach((c, i) => {
+			const name = list && list[i] ? list[i] : 'seat empty';
+			c.label.material.map.dispose();
+			c.label.material.map = labelTexture(`#${i + 1} ${name}`, '#ffffff', '#e0262b');
+			c.label.material.needsUpdate = true;
+		});
+	}
+
+	return { root, hull, update, drawScreens, setEyeCanvas, eyeUpdated, local, axis, rig, pilotView, setCameraMode, setVisible, setCrew, pilot };
 }
 
 /* ---------------- chair (built in the fly's body frame) ---------------- */

@@ -56,8 +56,12 @@ def main():
                     help="publish only the newest N flights (0 = all of them)")
     keep = ap.parse_args().keep
     OUT.mkdir(parents=True, exist_ok=True)
+    # The flight bundles are rebuilt from scratch; the broadcast's own files are
+    # not flights and are written by the runner on their own clocks.
+    keep_files = {"live.json", "crew.json"}
     for old in OUT.glob("*.json"):
-        old.unlink()
+        if old.name not in keep_files:
+            old.unlink()
     runs = sorted(M.RUNS.glob("*-L*-s*.json"))
     if keep:
         runs = sorted(runs, key=lambda p: p.stat().st_mtime)[-keep:]

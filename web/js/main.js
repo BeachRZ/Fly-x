@@ -629,6 +629,34 @@ addEventListener('keydown', (e) => {
 	if (e.code === 'Space') { e.preventDefault(); $('play').click(); }
 });
 
+/* Who is aboard. The passengers are not part of a flight: there is one list --
+ * whoever holds the token right now -- and every flight on the page shows it,
+ * the newest and the oldest alike. The server re-reads it from Robinhood Chain
+ * (sim/holders.py) and the page picks the change up while it plays. */
+const CREW_REFRESH_MS = 60_000;
+
+function setCrew(crew) {
+	const real = crew && crew.seats && crew.seats.length;
+	rocket.setCrew(real ? crew.seats.map((s) => s.label) : DEMO_CREW);
+	const t = real && crew.token;
+	$('crewNote').textContent = real
+		? `passengers are the top 10 holders of ${t.symbol} on Robinhood Chain right now, `
+			+ `of ${t.holders.toLocaleString('en-US')} addresses holding it. `
+			+ 'Trading pools and the launch locker are not people and get no seat. '
+			+ 'They have no brain and no effect on the flight.'
+		: 'passengers are the top-10 holders (demo addresses until the token launches). '
+			+ 'They have no brain and no effect on the flight.';
+}
+
+async function refreshCrew() {
+	try {
+		const r = await fetch(`missions/crew.json?t=${Date.now()}`, { cache: 'no-store' });
+		setCrew(r.ok ? await r.json() : null);
+	} catch (err) {
+		/* the seats keep whoever is in them; a missing list is not a broken page */
+	}
+}
+
 function demoAddresses(n) {
 	const abc = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 	let seed = 20260911;
@@ -638,6 +666,9 @@ function demoAddresses(n) {
 		return `${s.slice(0, 4)}…${s.slice(4)}`;
 	});
 }
+
+refreshCrew();
+setInterval(refreshCrew, CREW_REFRESH_MS);
 
 loadIndex().catch((err) => {
 	console.error(err);

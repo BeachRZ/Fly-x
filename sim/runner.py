@@ -21,6 +21,7 @@ import argparse
 import json
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -33,6 +34,7 @@ STATE = M.RUNS / "campaign.json"
 BLIND_EVERY = 10
 KEEP_DEFAULT = 120
 SLOT_S = 600                     # a launch goes out every ten minutes, on the clock
+CREW_S = 90                      # how often the passenger list is re-read from the chain
 
 
 def load_state():
@@ -116,6 +118,32 @@ def announce(mission_id):
     }), encoding="utf-8")
 
 
+def crew_loop(every_s=CREW_S):
+    """Keep `web/missions/crew.json` current: the token's top holders now.
+
+    The passengers are not part of a flight. There is one list, it is whoever
+    holds the token at this moment, and every flight on the page -- today's and
+    last week's -- shows it. So it lives in its own small file that the page
+    re-reads while it plays, and it is written here, on its own clock, rather
+    than at flight boundaries: a flight takes minutes and the seats should not
+    wait for one to end.
+
+    The explorer refusing must never stop the broadcast, so a failure leaves the
+    last good list in place and is only written to the log."""
+    web = HERE.parent / "web" / "missions"
+    import holders
+    while True:
+        try:
+            c = holders.crew()
+            web.mkdir(parents=True, exist_ok=True)
+            (web / "crew.json").write_text(json.dumps(c), encoding="utf-8")
+            log(f"crew: top {len(c['seats'])} of {c['token']['symbol']}, "
+                f"{c['token']['holders']:,} addresses hold it")
+        except Exception as e:
+            log(f"crew: not read ({type(e).__name__}: {str(e)[:140]}); keeping the last list")
+        time.sleep(every_s)
+
+
 def fly_one(keep):
     s = load_state()
     mode, level, seed = next_mission(s)
@@ -136,6 +164,8 @@ def main():
     ap.add_argument("--keep", type=int, default=KEEP_DEFAULT)
     a = ap.parse_args()
     log(f"runner started (keeping the newest {a.keep} flights published)")
+    if not a.once:
+        threading.Thread(target=crew_loop, daemon=True).start()
     while True:
         try:
             fly_one(a.keep)
