@@ -43,19 +43,22 @@ DEAD = "0x000000000000000000000000000000000000dead"
 RUNS = Path(os.environ.get("FLY_SPACE_RUNS", r"E:\test\fly\space-runs"))
 SEATS = 10
 
-# Until the real token launches this is a stand-in, and the page says so.
+# No token is written into the code. Which one the passengers come from is
+# configuration, not source: a copy of this repository seats nobody until it is
+# told what to read, and the page says the seats are placeholders.
 DEFAULT_TOKEN = ""
 
 
 def token_address():
-    """Which token the passengers come from. `runs/token.txt` wins so that the
-    broadcast can be pointed at a new token by writing one line on the server --
-    no code change, no restart: the next flight reads it and seats its holders."""
+    """Which token the passengers come from: one line in `runs/token.txt`, or
+    the FLY_TOKEN environment variable. The file wins, so a running broadcast
+    can be pointed at another token by writing one line on the server -- no code
+    change and no restart, the next read seats its holders."""
     f = RUNS / "token.txt"
     if f.exists():
-        line = f.read_text(encoding="utf-8").strip().split()[0] if f.read_text().strip() else ""
-        if line.startswith("0x") and len(line) == 42:
-            return line.lower()
+        words = f.read_text(encoding="utf-8").strip().split()
+        if words and words[0].startswith("0x") and len(words[0]) == 42:
+            return words[0].lower()
     return os.environ.get("FLY_TOKEN", DEFAULT_TOKEN).lower()
 
 
@@ -258,6 +261,9 @@ def from_logs(token=TOKEN, rescan=False, verbose=True):
 def crew(token=None, seats=SEATS):
     """The passengers for a flight, as of now."""
     token = (token or token_address()).lower()    # re-read: a long-running broadcast may be repointed
+    if not token:
+        raise RuntimeError("no token configured: write its address into runs/token.txt "
+                           "(or set FLY_TOKEN). Without one there are no passengers.")
     info = token_info(token)
     supply = int(info["total_supply"] or 0)
     rpc = Rpc()

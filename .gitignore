@@ -7,3 +7,6 @@ __pycache__/
 
 # The server configuration is not published: it proves nothing and saves a copy a day.
 deploy/
+
+# Live state, not a flight record: the passenger list is read from the chain.
+web/missions/crew.json
