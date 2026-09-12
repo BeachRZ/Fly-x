@@ -79,6 +79,7 @@ async function refreshIndex() {
  * counts down to the next one. The flight itself was computed earlier -- the
  * badge under the logo says how long ago. */
 const LIVE = { interval_s: 600, anchor: 0, next: 0, mission: null, skew: 0, on: false };
+let holding = false;                              // waiting on the pad for the next slot
 
 async function fetchLive() {
 	const res = await fetch(`missions/live.json?t=${Date.now()}`, { cache: 'no-store' });
@@ -102,14 +103,27 @@ async function joinLive() {
 	}
 	if (!LIVE.mission || !index.some((m) => m.id === LIVE.mission)) return;
 	await loadMission(LIVE.mission);
-	/* start where the broadcast already is */
 	const elapsed = serverNow() - LIVE.anchor;
-	if (elapsed < PREROLL) {
+	const flight = rows[rows.length - 1].t - rows[0].t + PREROLL;
+	holding = elapsed > flight + 2;
+	if (holding) {
+		/* this slot's launch is over: stand by on the pad until the next one,
+		 * the way a broadcast waits out the hold rather than freezing on a
+		 * finished flight */
+		preroll = 0;
+		t = rows[0].t;
+		playing = false;
+		endedAt = null;
+		$('play').textContent = '▶';
+		setCam('chase');
+		return;
+	}
+	if (elapsed < PREROLL) {                       // the countdown is still running
 		preroll = PREROLL - elapsed;
 		spoken = Math.ceil(preroll) + 1;
-	} else {
+	} else {                                       // join the flight where it already is
 		preroll = 0;
-		t = Math.min(rows[rows.length - 1].t, rows[0].t + (elapsed - PREROLL));
+		t = rows[0].t + (elapsed - PREROLL);
 	}
 	playing = true;
 	$('play').textContent = '❚❚';
@@ -134,8 +148,9 @@ function liveTick() {
 	const mm = String(Math.floor(left / 60)).padStart(2, '0');
 	const ss = String(Math.floor(left % 60)).padStart(2, '0');
 	$('liveTimer').textContent = `${mm}:${ss}`;
-	const flying = LIVE.on && endedAt === null;
-	$('liveState').textContent = flying ? 'ON AIR · NEXT IN' : 'NEXT LAUNCH IN';
+	$('liveState').textContent = !LIVE.on ? 'NEXT LAUNCH IN'
+		: holding ? 'HOLD · NEXT LAUNCH IN'
+		: endedAt === null ? 'ON AIR · NEXT IN' : 'NEXT LAUNCH IN';
 }
 
 function buildList() {
