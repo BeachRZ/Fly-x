@@ -101,8 +101,15 @@ async function joinLive() {
 		$('liveTimer').textContent = '--:--';
 		return;
 	}
-	if (!LIVE.mission || !index.some((m) => m.id === LIVE.mission)) return;
-	await loadMission(LIVE.mission);
+	if (!LIVE.mission) return;
+	/* the flight on air may be newer than the list this page loaded */
+	if (!index.some((m) => m.id === LIVE.mission)) await refreshIndex();
+	try {
+		await loadMission(LIVE.mission);
+	} catch (err) {
+		console.warn('live mission not available yet', err);
+		return;
+	}
 	const elapsed = serverNow() - LIVE.anchor;
 	const flight = rows[rows.length - 1].t - rows[0].t + PREROLL;
 	holding = elapsed > flight + 2;
