@@ -4,3 +4,6 @@ __pycache__/
 
 *.log
 .DS_Store
+
+# The server configuration is not published: it proves nothing and saves a copy a day.
+deploy/
