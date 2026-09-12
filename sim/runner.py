@@ -77,6 +77,15 @@ def advance(s, mode, outcome):
     return s
 
 
+def prune(keep_runs):
+    """Old flights leave the disk: at three minutes a flight this grows for ever."""
+    runs = sorted(M.RUNS.glob("*-L*-s*.json"), key=lambda p: p.stat().st_mtime)
+    for old in runs[:-keep_runs]:
+        old.unlink()
+    if len(runs) > keep_runs:
+        log(f"pruned {len(runs) - keep_runs} old flights, {keep_runs} kept on disk")
+
+
 def publish(keep):
     """Rebuild the bundles the site serves, keeping the newest `keep` flights."""
     out = subprocess.run([sys.executable, str(HERE / "export.py"), "--keep", str(keep)],
@@ -95,6 +104,7 @@ def fly_one(keep):
     result = M.fly_mission(mode, seed, level, save_frames=False)
     log(f"  -> {result['outcome']} at T+{result['t']:.1f} in {time.time() - t0:.0f}s wall")
     save_state(advance(s, mode, result["outcome"]))
+    prune(keep * 5)                                 # keep more on disk than on the page
     publish(keep)
     return result
 
