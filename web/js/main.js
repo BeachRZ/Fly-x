@@ -638,11 +638,8 @@ const CREW_REFRESH_MS = 60_000;
 function setCrew(crew) {
 	const real = crew && crew.seats && crew.seats.length;
 	rocket.setCrew(real ? crew.seats.map((s) => s.label) : DEMO_CREW);
-	const t = real && crew.token;
 	$('crewNote').textContent = real
-		? `passengers are the top 10 holders of ${t.symbol} on Robinhood Chain right now, `
-			+ `of ${t.holders.toLocaleString('en-US')} addresses holding it. `
-			+ 'Trading pools and the launch locker are not people and get no seat. '
+		? `passengers are the top 10 holders of ${crew.token.symbol} on Robinhood Chain right now. `
 			+ 'They have no brain and no effect on the flight.'
 		: 'passengers are the top-10 holders (demo addresses until the token launches). '
 			+ 'They have no brain and no effect on the flight.';
