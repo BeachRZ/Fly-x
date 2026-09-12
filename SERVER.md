@@ -1,6 +1,11 @@
-# FLY X on a server: real time and optimisation
+# FLY-X on a server
 
-## What costs what (measured on this laptop, Ryzen 5 2500U)
+What a flight costs, how the broadcast actually runs, and what would be needed to
+put the brain live in the loop.
+
+## What costs what
+
+Measured on a Ryzen 5 2500U laptop:
 
 | step | time |
 |---|---|
@@ -10,50 +15,62 @@
 | the landing camera frame | 46 ms |
 | sampling the 3,335 photoreceptors | 3 ms |
 
-Real time needs 28.6 ms per step, so this laptop is about 8× slower than real time. One flight to the Moon (~37 s) takes ~5 minutes alone and ~13 minutes when three run side by side.
+Real time would need 28.6 ms per step, so that laptop is about 8 times slower
+than real time. A server core is roughly 2 to 3 times quicker, which puts one
+flight at 2 to 4 minutes of compute.
 
-The brain is deterministic: the same mission (level + number) gives the same flight byte for byte. That property is what makes the server design simple.
+The brain is deterministic: the same mission (level and number) gives the same
+flight byte for byte. That property is what makes the whole design simple, and it
+is what anyone checking the project relies on.
 
-## Broadcast architecture (recommended for launch)
-
-An honest "live with delay": flights are computed ahead, the viewer watches a finished flight and sees the badge *REPLAY · the brain computed this flight in N min*.
+## How the broadcast runs
 
 ```
-[sim workers]        ->  [queue of finished flights]  ->  [broadcaster]  ->  [CDN static]  ->  browsers
- python mission.py       missions/*.json + index          which flight       html/js/three     render in 3D
- one process per core    (gzip ~200-400 KB)               is on now and      + flight bundles  themselves
-                                                          from which second
+[runner.py]  ->  [runs/*.json]  ->  [export.py]  ->  [web/missions/*.json]  ->  browsers
+ one flight       the raw flight     bundles for      index.json, live.json     render in 3D
+ after another    and its trace      the viewer       crew.json                 themselves
 ```
 
-- **Workers.** One `mission.py` process per physical core, taking jobs (level, number) from a queue (SQLite/Redis) and writing bundles through `export.py`.
-- **Broadcaster.** A tiny service (FastAPI or Node) serving `/now`: the current flight and its start time by the server clock. Every viewer sees the same second of the same flight — one shared channel, one shared chat, shared reactions.
-- **The browser** fetches the bundle from a CDN and plays it locally: all 3D is on the viewer's side, the server renders nothing. For 10,000 viewers you only need a CDN (~300 KB per flight per viewer).
-- **Throughput.** A flight lasts 40-60 s on screen. A modern server core is roughly 2-3× faster than a 2500U core, so ~2-3 minutes of compute per flight. Eight cores give 3-4 flights per minute against the ~1 per minute a continuous channel needs. One modest dedicated box (8 cores, 16 GB) sustains a 24/7 channel and builds a buffer.
+* **runner.py** picks the next mission by a published rule: the campaign level, or
+  the blind control on every tenth flight. Its state lives in `runs/campaign.json`,
+  so a restart continues where it stopped. A single flight that fails cannot stop
+  the broadcast.
+* **The passenger list** is refreshed on its own clock, every 90 seconds, into
+  `web/missions/crew.json`. The explorer being down costs the list nothing: the
+  last good one stays.
+* **The schedule** is a grid of ten-minute slots counted from the Unix epoch, in
+  `live.json`. There is no `/now` endpoint and no server clock to agree with: every
+  viewer computes the same slot from their own clock, and the page picks the newest
+  flight that was ready before the slot began. That keeps the schedule ticking
+  while the next flight is still being computed.
+* **The browser** fetches a bundle and plays it locally. All 3D is on the viewer's
+  side and the server renders nothing, so the cost per viewer is one static file of
+  a few hundred kilobytes.
+
+The page never pretends this is live: it carries the badge *REPLAY, the brain
+computed this flight in N min*.
 
 ## Provable honesty
 
-- Publish the rules (`world.py`), the code, and the hash of the neural kernel binary (DOOMFLY already verifies it against `kernel.cpp`).
-- Every flight is defined by its level and number. Anyone can run `python mission.py --mode fly --seed N --level L` and get the same bundle.
-- Blind control flights run in the same queue, so the page can always show "seeing fly: X landings of N, blind: 0 of M".
+* The rules (`world.py`), the code, and the hash of the neural kernel binary are
+  public; the kernel checks itself against `kernel.cpp` before every run.
+* Every flight is defined by its level and number, so anyone can run
+  `python mission.py --mode fly --seed N --level L` and get the same bundle.
+* Blind control flights run in the same queue as the rest, so the page can always
+  show "seeing fly: X landings of N, blind: 0 of M".
 
-## True real time (the brain live in the loop)
+## What true real time would take
 
-Needed if viewers are to affect a flight as it happens (holders voting where to throw a meteor, say). It takes an 8× speedup:
+Only needed if viewers are to affect a flight while it happens. It is an eightfold
+speedup away:
 
-1. **The neural kernel on a GPU.** 25.6M synapses fit in ~200 MB of video memory, and an event-driven LIF model maps well onto CUDA. Expect 2-5 ms per step — real time with headroom on a single card. The biggest win, and a project of its own: rewrite `kernel.cpp` and check it against the CPU version step by step.
-2. **A window with no raster.** Compute luminance analytically at the 3,335 retinal sample points (stars, discs, glows) instead of rendering 640×480. Saves ~20-45 ms per step and removes the gap between the window and the landing camera.
-3. **A fast CPU** (AVX-512, high clock) buys another 2-3×. Not enough on its own for real time.
-4. **Do not** enlarge the integration step (0.1 ms → 0.25 ms). That changes the brain model and makes results incomparable.
-
-## Token
-
-- The top-10 holders come from a Solana RPC (Helius/Triton) before each launch; their addresses are the names on the seats. The site currently shows demo addresses and says so.
-- The mission number and its outcome can be written into a memo transaction: a public flight log on chain.
-
-## Order of work
-
-1. Job queue plus a worker wrapper around `mission.py`, one exported bundle per flight.
-2. The `/now` broadcaster and synchronised playback in `main.js`: broadcast time instead of the local clock.
-3. Static hosting on a CDN, gzip for the bundles (they are plain JSON today).
-4. Monitoring: flights in the buffer, compute time, outcome counters.
-5. (Later) the GPU kernel for true real time.
+1. **The neural kernel on a GPU.** 25.6M synapses fit in about 200 MB of video
+   memory, and an event-driven LIF model maps well onto CUDA: expect 2 to 5 ms per
+   step, which is real time with headroom on one card. The biggest win and a
+   project of its own, because the rewrite has to be checked against the CPU
+   version step by step.
+2. **A window with no raster.** Compute luminance analytically at the 3,335 retinal
+   sample points instead of rendering 640×480. Saves 20 to 45 ms per step.
+3. **A faster CPU** buys another 2 to 3 times. Not enough on its own.
+4. **Do not enlarge the integration step.** That changes the brain model and makes
+   every earlier result incomparable.
