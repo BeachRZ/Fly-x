@@ -354,21 +354,44 @@ function followCamera(s) {
 	lastTarget.copy(new THREE.Vector3(s.x, s.y, 0));
 }
 
+/* One finger turns the camera, two pinch it closer, a wheel does the same on a
+ * desktop. Every pointer is tracked rather than just the last one: with two
+ * fingers down, a single "last position" jumps between them and the view spins. */
 const canvas = $('view');
-let drag = null;
+const pointers = new Map();
+let pinch = 0;
+
+const spread = () => {
+	const [a, b] = [...pointers.values()];
+	return Math.hypot(a.x - b.x, a.y - b.y);
+};
+
 canvas.addEventListener('pointerdown', (e) => {
 	if (!rigs[camMode]) return;
-	drag = { x: e.clientX, y: e.clientY };
+	pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 	canvas.setPointerCapture(e.pointerId);
+	if (pointers.size === 2) pinch = spread();
 });
 canvas.addEventListener('pointermove', (e) => {
-	if (!drag || !rigs[camMode]) return;
 	const r = rigs[camMode];
-	r.az -= (e.clientX - drag.x) * 0.006;
-	r.el = clamp(r.el + (e.clientY - drag.y) * 0.006, -1.45, 1.45);
-	drag = { x: e.clientX, y: e.clientY };
+	if (!r || !pointers.has(e.pointerId)) return;
+	const was = pointers.get(e.pointerId);
+	pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+	if (pointers.size === 1) {
+		r.az -= (e.clientX - was.x) * 0.006;
+		r.el = clamp(r.el + (e.clientY - was.y) * 0.006, -1.45, 1.45);
+	} else if (pointers.size === 2) {
+		const now = spread();
+		if (pinch > 0 && now > 0) r.dist = clamp(r.dist * (pinch / now), r.min, r.max);
+		pinch = now;
+	}
 });
-canvas.addEventListener('pointerup', () => { drag = null; });
+const liftPointer = (e) => {
+	pointers.delete(e.pointerId);
+	if (pointers.size < 2) pinch = 0;
+};
+canvas.addEventListener('pointerup', liftPointer);
+canvas.addEventListener('pointercancel', liftPointer);
 canvas.addEventListener('wheel', (e) => {
 	const r = rigs[camMode];
 	if (!r) return;

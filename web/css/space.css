@@ -8,10 +8,19 @@
 	--panel: rgba(0, 0, 0, 0.5);
 	--mono: Consolas, "SFMono-Regular", Menlo, monospace;
 	--sans: "D-DIN", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+
+	/* notch and home indicator; zero on a desktop */
+	--safe-t: env(safe-area-inset-top, 0px);
+	--safe-r: env(safe-area-inset-right, 0px);
+	--safe-b: env(safe-area-inset-bottom, 0px);
+	--safe-l: env(safe-area-inset-left, 0px);
 }
 * { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body { margin: 0; height: 100%; background: #000; color: var(--ink); font: 13px/1.45 var(--sans); overflow: hidden; }
-#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+/* touch-action: the canvas owns its gestures, not the browser */
+#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 
 /* brand */
 #brand { position: fixed; top: 20px; left: 26px; display: flex; gap: 18px; align-items: center; pointer-events: none; }
@@ -54,10 +63,23 @@ html, body { margin: 0; height: 100%; background: #000; color: var(--ink); font:
 #controls select option { background: #0b0d12; color: #fff; }
 #controls select optgroup { background: #0b0d12; color: #8f98a8; font-style: normal; font-weight: 600;
 	font-size: 11px; letter-spacing: 0.1em; }
-#controls button:hover { border-color: var(--faint); }
+/* :hover sticks to the last tap on a touchscreen */
+@media (hover: hover) {
+	#controls button:hover { border-color: var(--faint); }
+	.tabs button:hover { color: var(--ink); }
+}
 #controls button.on { border-color: var(--ink); }
 #controls .sep { width: 1px; height: 16px; background: var(--faint); margin: 0 4px; }
 #controls label { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); display: flex; gap: 4px; align-items: center; }
+
+/* Wide screens: the bar is shrink-to-fit, so it only ever scrolls on a screen
+ * too narrow to hold it -- where it used to run under the logo and off the
+ * left edge, taking the flight title and the last buttons with it. */
+@media (min-width: 1101px) {
+	#controls { max-width: calc(100vw - 452px); overflow-x: auto; scrollbar-width: none; }
+	#controls::-webkit-scrollbar { display: none; }
+	#controls > * { flex: 0 0 auto; }
+}
 
 /* panels */
 .ph { font-size: 10px; letter-spacing: 0.2em; color: var(--dim); padding: 9px 12px 6px; font-weight: 600; }
@@ -138,4 +160,145 @@ html, body { margin: 0; height: 100%; background: #000; color: var(--ink); font:
 	#hud { grid-template-columns: 1fr 1.6fr 1fr; padding: 0 12px 10px; }
 	.gauge { width: 92px; height: 92px; }
 	#controls { flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 20px); top: auto; bottom: 210px; }
+}
+
+/* ---------------------------------------------------------------- phones
+ *
+ * The desktop layout is a set of panels parked in the four corners of a wide
+ * screen. On a phone there are no corners to spare, so the panels are stacked
+ * down the right and the bottom instead, in the order they matter: the window
+ * the fly is looking through, the clock, the gauges. Everything that is prose
+ * (the scoreboard, the passenger note) steps aside -- it reads badly at 9px and
+ * it is in the way of the rocket, which is what somebody came to see.
+ */
+/* Phones, held either way: the corner panels become one column down the right
+ * and one bar along the bottom, and the prose steps out of the rocket's way. */
+@media (max-width: 760px), (orientation: landscape) and (max-height: 560px) {
+	#brand { top: calc(var(--safe-t) + 8px); left: calc(var(--safe-l) + 12px); gap: 10px; }
+	.logo { font-size: clamp(19px, 5.6vw, 24px); }
+	.mission { padding-left: 10px; font-size: 9.5px; letter-spacing: 0.08em; max-width: 46vw; }
+	.mission .sub { font-size: 8.5px; letter-spacing: 0.02em; }
+
+	#live { top: calc(var(--safe-t) + 50px); left: calc(var(--safe-l) + 12px); font-size: 8.5px; letter-spacing: 0.08em; }
+	#live i { width: 5px; height: 5px; }
+	#score, #crewNote { display: none; }
+
+	/* one sideways-scrolling strip instead of four wrapped rows */
+	#controls { top: calc(var(--safe-t) + 72px); left: calc(var(--safe-l) + 8px); right: calc(var(--safe-r) + 8px);
+		bottom: auto; max-width: none; flex-wrap: nowrap; justify-content: flex-start;
+		overflow-x: auto; overscroll-behavior-x: contain; gap: 4px; padding: 4px 6px;
+		scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+	#controls::-webkit-scrollbar { display: none; }
+	#controls > * { flex: 0 0 auto; }
+	#controls button, #controls select, #controls label { white-space: nowrap; }
+	#controls .sep { margin: 0 2px; }
+	#broadcast .bsub { font-size: 9px; letter-spacing: 0.08em; }
+
+	#eyePanel { top: calc(var(--safe-t) + 122px); right: calc(var(--safe-r) + 8px);
+		width: min(170px, 46vw); padding-bottom: 6px; }
+	#eye, #brainCanvas { width: 100%; aspect-ratio: 4 / 3; height: auto; margin: 0; }
+	.tabs { padding: 6px 8px 5px; gap: 1px; }
+	.tabs button { font-size: 8px; letter-spacing: 0.1em; padding: 3px 5px; }
+	.tabs #gain { font-size: 8px; }
+	.ph { font-size: 8px; letter-spacing: 0.14em; padding: 7px 8px 3px; }
+	.note { font-size: 8.5px; line-height: 1.35; padding: 5px 8px 2px; }
+	.neuron { grid-template-columns: 54px 1fr 20px; gap: 5px; padding: 3px 8px; font-size: 9px; }
+	.lever { margin: 7px 10px 0; font-size: 8.5px; gap: 6px; }
+	.lever b { width: 12px; height: 12px; margin-left: -6px; top: -5px; }
+
+	#rules { top: calc(var(--safe-t) + 72px); width: calc(100vw - var(--safe-l) - var(--safe-r) - 16px);
+		max-height: calc(100dvh - var(--safe-t) - 250px); overflow-y: auto; overscroll-behavior: contain; }
+	#rules dl { grid-template-columns: 62px 1fr; gap: 7px 10px; padding: 4px 12px 8px; font-size: 10.5px; }
+	#rules dt { font-size: 9px; letter-spacing: 0.1em; }
+
+	#banner { top: 32%; }
+	#banner .title { font-size: clamp(20px, 6.5vw, 28px); letter-spacing: 0.08em; }
+	#banner .cause { font-size: 10px; padding: 8px 12px; margin-top: 10px; max-width: calc(100vw - 40px); }
+
+	#boot .logo { font-size: clamp(34px, 11vw, 46px); }
+	#boot .boot-bar { width: min(200px, 56vw); }
+	#boot .boot-txt { font-size: 9px; letter-spacing: 0.2em; }
+}
+
+/* narrow: clock full width, the four gauges on the row under it */
+@media (max-width: 760px) {
+	#hud { height: auto; padding: 0 calc(var(--safe-r) + 10px) calc(var(--safe-b) + 10px) calc(var(--safe-l) + 10px);
+		gap: 0 8px; grid-template-columns: 1fr 1fr; grid-template-areas: "mid mid" "left right"; }
+	#hud > .gauges { grid-area: left; gap: 10px; }
+	#hud > .gauges.right { grid-area: right; }
+	#hud > .center { grid-area: mid; padding-bottom: 0; }
+	.gauge { width: clamp(56px, 17vw, 72px); height: clamp(56px, 17vw, 72px); }
+	.gl { font-size: 7.5px; letter-spacing: 0.1em; max-width: 76px; margin-top: -2px; }
+	#stage { font-size: 9px; letter-spacing: 0.16em; }
+	#clock { font-size: clamp(24px, 8vw, 34px); margin: 1px 0 2px; }
+	#timeline { height: 24px; margin: 0 8px; }
+	.tl-line { top: 11px; }
+	.tl-ev { top: 7px; }
+	.tl-ev i { width: 9px; height: 9px; border-width: 2px; }
+	.tl-ev span { display: none; }          /* the dots stay, the words do not fit */
+	#details { font-size: 8.5px; letter-spacing: 0.02em; line-height: 1.3; }
+}
+
+/* on its side: little height, so the bottom bar and the panel give some back */
+@media (orientation: landscape) and (max-height: 560px) {
+	#hud { height: auto; align-items: end; grid-template-areas: none;
+		grid-template-columns: 1fr minmax(220px, 1.4fr) 1fr;
+		padding: 0 calc(var(--safe-r) + 12px) calc(var(--safe-b) + 6px) calc(var(--safe-l) + 12px); }
+	#hud > .gauges, #hud > .gauges.right, #hud > .center { grid-area: auto; }
+	.gauge { width: 54px; height: 54px; }
+	.gl { font-size: 7px; max-width: 62px; }
+	#clock { font-size: 22px; margin: 0; }
+	#stage { font-size: 8.5px; }
+	#timeline { height: 18px; margin: 0 6px; }
+	.tl-line { top: 8px; }
+	.tl-ev { top: 4px; }
+	#details { display: none; }
+
+	#live { top: calc(var(--safe-t) + 42px); }
+	/* bottom, not top: the top belongs to the logo and the flight title */
+	#controls { top: auto; bottom: calc(var(--safe-b) + 88px);
+		left: calc(var(--safe-l) + 10px); right: calc(var(--safe-r) + 174px); max-width: none; }
+	.tl-ev span { display: none; }
+	#eyePanel { top: calc(var(--safe-t) + 46px); width: 156px; }
+	#eyePanel .note, #eyePanel .lever, #eyePanel #leverTxt { display: none; }
+	#rules { top: calc(var(--safe-t) + 56px); max-height: calc(100dvh - var(--safe-t) - 80px); }
+}
+
+
+@media (max-width: 760px) and (max-height: 700px) and (orientation: portrait) {
+	#eyePanel { top: calc(var(--safe-t) + 122px); width: min(152px, 44vw); }
+	#eyePanel .note, #eyePanel .lever, #eyePanel #leverTxt { display: none; }
+	.gauge { width: 52px; height: 52px; }
+	.gl { font-size: 7px; }
+	#clock { font-size: 23px; }
+	#timeline { height: 20px; }
+	.tl-line { top: 9px; }
+	.tl-ev { top: 5px; }
+}
+
+
+/* shortest landscape: the panel is down to the window itself */
+@media (orientation: landscape) and (max-height: 400px) {
+	#eyePanel { padding-bottom: 4px; }
+	#eyePanel .ph, #eyePanel .neuron { display: none; }
+}
+
+@media (max-width: 360px) {
+	.mission { max-width: 40vw; font-size: 9px; letter-spacing: 0.04em; }
+	.mission .sub { display: none; }
+}
+
+
+@media (pointer: coarse) {
+	#controls button, #liveBtn { min-height: 34px; padding-inline: 10px; }
+	#controls select { min-height: 34px; font-size: 16px; max-width: 42vw; }
+	#controls label { min-height: 34px; }
+	#controls input[type="checkbox"] { width: 16px; height: 16px; }
+	.tabs button { min-height: 28px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#live i, #boot .boot-bar b { animation: none; }
+	#log li, #banner { animation: none; }
+	.neuron b, .lever b { transition: none; }
 }
