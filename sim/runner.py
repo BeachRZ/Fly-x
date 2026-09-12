@@ -98,20 +98,21 @@ def publish(keep):
 
 
 def announce(mission_id):
-    """The broadcast schedule: launches happen on a fixed grid of slots, so every
-    viewer starts the same flight on the same second, and between launches the
-    page counts down to the next one. The flight itself was computed earlier --
-    the page says so."""
+    """The broadcast schedule.
+
+    Launches go out on a grid of slots counted from the unix epoch, so every
+    viewer's clock agrees: at 00:00, 00:10, 00:20 and so on, the same flight
+    starts for everybody. Which flight a slot shows is decided by the page from
+    the index -- the newest one that was finished before the slot began -- so
+    the schedule keeps ticking even while the next flight is still being
+    computed. The flight itself was computed earlier; the page says so."""
     web = HERE.parent / "web" / "missions"
     web.mkdir(parents=True, exist_ok=True)
-    now = int(time.time())
-    anchor = now - now % SLOT_S
     (web / "live.json").write_text(json.dumps({
         "interval_s": SLOT_S,
-        "anchor": anchor,
-        "next": anchor + SLOT_S,
-        "mission": mission_id,
-        "generated": now,
+        "epoch": 0,
+        "latest": mission_id,
+        "generated": int(time.time()),
     }), encoding="utf-8")
 
 

@@ -154,10 +154,19 @@ class World:
         u = (self.target - PAD) / np.linalg.norm(self.target - PAD)
         nrm = np.array([-u[1], u[0]])
         span = np.linalg.norm(self.target - PAD)
+        # A third of the rocks orbit the target itself, the rest lie along the way.
+        # Without the ring the final approach was always clean: whatever curve the
+        # pilot flew, the last stretch had nothing in it.
         ast = []
-        for _ in range(L["asteroids"]):
-            f = rng.uniform(*L["ast_band"])
-            p = PAD + u * f * span + nrm * rng.normal(0, L["ast_spread"])
+        ring = max(2, L["asteroids"] // 3)
+        for i in range(L["asteroids"]):
+            if i < ring:
+                a = rng.uniform(0, 2 * math.pi)
+                d = self.R + rng.uniform(45, 230)
+                p = self.target + d * np.array([math.cos(a), math.sin(a)])
+            else:
+                f = rng.uniform(*L["ast_band"])
+                p = PAD + u * f * span + nrm * rng.normal(0, L["ast_spread"])
             ast.append([p[0], p[1], rng.uniform(*L["ast_r"])])
         self.asteroids = np.array(ast, np.float64).reshape(-1, 3)
         met = []

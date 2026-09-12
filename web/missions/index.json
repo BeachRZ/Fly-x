@@ -8,7 +8,8 @@
   "outcome": "collision",
   "landed": false,
   "on_pad": false,
-  "t": 12.46
+  "t": 12.46,
+  "published": 1789171062
  },
  {
   "id": "fly-L1-s2",
@@ -19,7 +20,8 @@
   "outcome": "landed_off",
   "landed": true,
   "on_pad": false,
-  "t": 37.14
+  "t": 37.14,
+  "published": 1789172426
  },
  {
   "id": "fly-L1-s3",
@@ -30,7 +32,8 @@
   "outcome": "landed",
   "landed": true,
   "on_pad": true,
-  "t": 36.8
+  "t": 36.8,
+  "published": 1789170815
  },
  {
   "id": "fly-L1-s4",
@@ -41,7 +44,8 @@
   "outcome": "collision",
   "landed": false,
   "on_pad": false,
-  "t": 22.66
+  "t": 22.66,
+  "published": 1789172168
  },
  {
   "id": "fly-L1-s5",
@@ -52,7 +56,8 @@
   "outcome": "landed",
   "landed": true,
   "on_pad": true,
-  "t": 37.57
+  "t": 37.57,
+  "published": 1789170826
  },
  {
   "id": "fly-L1-s6",
@@ -63,7 +68,8 @@
   "outcome": "landed_off",
   "landed": true,
   "on_pad": false,
-  "t": 37.23
+  "t": 37.23,
+  "published": 1789172428
  },
  {
   "id": "fly-L1-s7",
@@ -74,7 +80,8 @@
   "outcome": "tipped",
   "landed": false,
   "on_pad": false,
-  "t": 37.23
+  "t": 37.23,
+  "published": 1789171755
  },
  {
   "id": "fly-L1-s8",
@@ -85,7 +92,8 @@
   "outcome": "collision",
   "landed": false,
   "on_pad": false,
-  "t": 12.89
+  "t": 12.89,
+  "published": 1789172350
  },
  {
   "id": "fly-L1-s9",
@@ -96,7 +104,8 @@
   "outcome": "landed_off",
   "landed": true,
   "on_pad": false,
-  "t": 37.91
+  "t": 37.91,
+  "published": 1789172803
  },
  {
   "id": "fly-L1-s10",
@@ -107,7 +116,8 @@
   "outcome": "landed_off",
   "landed": true,
   "on_pad": false,
-  "t": 38.0
+  "t": 38.0,
+  "published": 1789172861
  },
  {
   "id": "fly-L1-s11",
@@ -118,7 +128,8 @@
   "outcome": "tipped",
   "landed": false,
   "on_pad": false,
-  "t": 36.71
+  "t": 36.71,
+  "published": 1789172854
  },
  {
   "id": "fly-L1-s12",
@@ -129,7 +140,8 @@
   "outcome": "landed",
   "landed": true,
   "on_pad": true,
-  "t": 36.54
+  "t": 36.54,
+  "published": 1789171606
  },
  {
   "id": "blind-L1-s1",
@@ -140,7 +152,8 @@
   "outcome": "lost",
   "landed": false,
   "on_pad": false,
-  "t": 70.0
+  "t": 70.0,
+  "published": 1789171119
  },
  {
   "id": "blind-L1-s2",
@@ -151,7 +164,8 @@
   "outcome": "lost",
   "landed": false,
   "on_pad": false,
-  "t": 70.0
+  "t": 70.0,
+  "published": 1789173455
  },
  {
   "id": "blind-L1-s3",
@@ -162,7 +176,8 @@
   "outcome": "lost",
   "landed": false,
   "on_pad": false,
-  "t": 70.0
+  "t": 70.0,
+  "published": 1789173595
  },
  {
   "id": "fly-L2-s1",
@@ -173,7 +188,8 @@
   "outcome": "landed",
   "landed": true,
   "on_pad": true,
-  "t": 56.17
+  "t": 56.17,
+  "published": 1789171821
  },
  {
   "id": "fly-L2-s2",
@@ -184,7 +200,8 @@
   "outcome": "collision",
   "landed": false,
   "on_pad": false,
-  "t": 22.06
+  "t": 22.06,
+  "published": 1789173003
  },
  {
   "id": "fly-L2-s3",
@@ -195,7 +212,8 @@
   "outcome": "tipped",
   "landed": false,
   "on_pad": false,
-  "t": 56.6
+  "t": 56.6,
+  "published": 1789173457
  },
  {
   "id": "blind-L2-s1",
@@ -206,7 +224,8 @@
   "outcome": "lost",
   "landed": false,
   "on_pad": false,
-  "t": 95.03
+  "t": 95.03,
+  "published": 1789173993
  },
  {
   "id": "blind-L2-s2",
@@ -217,6 +236,7 @@
   "outcome": "lost",
   "landed": false,
   "on_pad": false,
-  "t": 95.03
+  "t": 95.03,
+  "published": 1789173997
  }
 ]

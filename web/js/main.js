@@ -78,8 +78,9 @@ async function refreshIndex() {
  * watching sees the same flight at the same second. Between launches the page
  * counts down to the next one. The flight itself was computed earlier -- the
  * badge under the logo says how long ago. */
-const LIVE = { interval_s: 600, anchor: 0, next: 0, mission: null, skew: 0, on: false };
+const LIVE = { interval_s: 600, epoch: 0, latest: null, skew: 0, on: false };
 let holding = false;                              // waiting on the pad for the next slot
+let currentSlot = -1;
 
 async function fetchLive() {
 	const res = await fetch(`missions/live.json?t=${Date.now()}`, { cache: 'no-store' });
@@ -93,34 +94,36 @@ async function fetchLive() {
 
 const serverNow = () => (Date.now() + LIVE.skew) / 1000;
 
-async function joinLive() {
+const slotStartOf = (ts) => Math.floor((ts - LIVE.epoch) / LIVE.interval_s) * LIVE.interval_s + LIVE.epoch;
+
+/* Which flight a slot shows: the newest one finished before the slot began, so
+ * everybody watching that slot sees the same flight whatever their clock does. */
+function missionForSlot(slotStart) {
+	const byTime = [...index].sort((a, b) => (a.published || 0) - (b.published || 0));
+	const ready = byTime.filter((m) => (m.published || 0) <= slotStart);
+	return (ready.length ? ready[ready.length - 1] : byTime[byTime.length - 1]) || null;
+}
+
+async function startSlot(slotStart) {
+	const m = missionForSlot(slotStart);
+	if (!m) return;
 	try {
-		await fetchLive();
+		await loadMission(m.id);                   // always reload: a slot starts the flight from scratch
 	} catch (err) {
-		$('liveState').textContent = 'BROADCAST OFFLINE';
-		$('liveTimer').textContent = '--:--';
+		console.warn('broadcast flight not available', err);
 		return;
 	}
-	if (!LIVE.mission) return;
-	/* the flight on air may be newer than the list this page loaded */
-	if (!index.some((m) => m.id === LIVE.mission)) await refreshIndex();
-	try {
-		await loadMission(LIVE.mission);
-	} catch (err) {
-		console.warn('live mission not available yet', err);
-		return;
-	}
-	const elapsed = serverNow() - LIVE.anchor;
+	const elapsed = serverNow() - slotStart;
 	const flight = rows[rows.length - 1].t - rows[0].t + PREROLL;
 	holding = elapsed > flight + 2;
-	if (holding) {
-		/* this slot's launch is over: stand by on the pad until the next one,
-		 * the way a broadcast waits out the hold rather than freezing on a
-		 * finished flight */
+	if (holding) {                                 // the launch of this slot is over: stand by on the pad
 		preroll = 0;
 		t = rows[0].t;
 		playing = false;
 		endedAt = null;
+		logShown = 0;
+		$('log').querySelector('ol').innerHTML = '';
+		$('banner').hidden = true;
 		$('play').textContent = '▶';
 		setCam('chase');
 		return;
@@ -128,6 +131,7 @@ async function joinLive() {
 	if (elapsed < PREROLL) {                       // the countdown is still running
 		preroll = PREROLL - elapsed;
 		spoken = Math.ceil(preroll) + 1;
+		t = rows[0].t;
 	} else {                                       // join the flight where it already is
 		preroll = 0;
 		t = rows[0].t + (elapsed - PREROLL);
@@ -136,28 +140,34 @@ async function joinLive() {
 	$('play').textContent = '❚❚';
 }
 
+async function joinLive() {
+	await fetchLive().catch(() => {});
+	await refreshIndex();
+	currentSlot = slotStartOf(serverNow());
+	await startSlot(currentSlot);
+}
+
 function setLive(on) {
 	LIVE.on = on;
 	$('liveBtn').classList.toggle('on', on);
 	if (on) joinLive();
 }
 
-let lastSlot = 0;
 function liveTick() {
-	if (!LIVE.next) return;
+	if (!LIVE.interval_s) return;
 	const now = serverNow();
-	if (now >= LIVE.next) {                       // a new slot started
-		if (LIVE.on && lastSlot !== LIVE.next) { lastSlot = LIVE.next; joinLive(); }
-		else fetchLive().catch(() => {});
-		return;
-	}
-	const left = Math.max(0, LIVE.next - now);
+	const slot = slotStartOf(now);
+	const left = Math.max(0, slot + LIVE.interval_s - now);
 	const mm = String(Math.floor(left / 60)).padStart(2, '0');
 	const ss = String(Math.floor(left % 60)).padStart(2, '0');
 	$('liveTimer').textContent = `${mm}:${ss}`;
 	$('liveState').textContent = !LIVE.on ? 'NEXT LAUNCH IN'
 		: holding ? 'HOLD · NEXT LAUNCH IN'
 		: endedAt === null ? 'ON AIR · NEXT IN' : 'NEXT LAUNCH IN';
+	if (LIVE.on && slot !== currentSlot) {         // a new slot: launch, for everybody at once
+		currentSlot = slot;
+		refreshIndex().then(() => startSlot(slot));
+	}
 }
 
 function buildList() {
@@ -419,8 +429,11 @@ function side(deg) { return Math.abs(deg) < 1 ? 'dead centre' : `${Math.abs(deg)
 
 function hud(s) {
 	const lvl = mission.level;
-	/* the countdown shows the number the voice is saying: both round up */
-	$('clock').textContent = clockText(preroll > 0 ? -Math.ceil(preroll) : s.t);
+	/* waiting for a scheduled launch: the big clock counts down to it. Otherwise
+	 * the countdown shows the number the voice is saying -- both round up. */
+	const toLaunch = LIVE.on && holding && LIVE.interval_s
+		? slotStartOf(serverNow()) + LIVE.interval_s - serverNow() : 0;
+	$('clock').textContent = clockText(toLaunch > 0 ? -toLaunch : preroll > 0 ? -Math.ceil(preroll) : s.t);
 	const earthAlt = Math.max(0, Math.hypot(s.x, s.y) - R_EARTH - ROCKET_L / 2);
 	const overTarget = s.alt < earthAlt;
 	const alt = Math.max(0, overTarget ? s.alt : earthAlt);
@@ -431,7 +444,8 @@ function hud(s) {
 	gauge($('gG'), (s.g || 0) / 3, (s.g || 0).toFixed(2), 'G');
 	const fuel = Math.max(0, (s.fuel ?? 0) / lvl.fuel_s);
 	gauge($('gFuel'), fuel, (fuel * 100).toFixed(0), '%');
-	$('stage').textContent = endedAt ? OUTCOME[mission.result.outcome] : PHASE[s.phase] || '';
+	$('stage').textContent = toLaunch > 0 ? 'HOLD FOR LAUNCH'
+		: endedAt ? OUTCOME[mission.result.outcome] : PHASE[s.phase] || '';
 	const dist = Math.hypot(lvl.target[0] - s.x, lvl.target[1] - s.y) - lvl.R;
 	const aim = s.view === 'down' ? `PAD ${side(s.rel_deg)}` : `${targetName(lvl.name)} ${side(s.rel_deg)}`;
 	$('details').textContent = `${dist.toFixed(0)} U TO ${targetName(lvl.name)} · ${aim} · THROTTLE ${(s.throttle * 100).toFixed(0)}% · VERT ${(-(s.vr || 0)).toFixed(1)} · LAT ${(s.vt || 0).toFixed(1)} U/S`;

@@ -70,7 +70,10 @@ def main():
         (OUT / f"{p.stem}.json").write_text(json.dumps(b, ensure_ascii=False), encoding="utf-8")
         r = b["result"]
         index.append({"id": p.stem, "mode": mode, "level": r["level"], "target": r["target"], "seed": r["seed"],
-                      "outcome": r["outcome"], "landed": b["landed"], "on_pad": b["on_pad"], "t": r["t"]})
+                      "outcome": r["outcome"], "landed": b["landed"], "on_pad": b["on_pad"], "t": r["t"],
+                      # when the flight became available: the broadcast picks, for
+                      # each slot, the newest flight that was ready before it began
+                      "published": int(p.stat().st_mtime)})
     index.sort(key=lambda m: (m["level"], m["mode"] != "fly", m["seed"]))
     (OUT / "index.json").write_text(json.dumps(index, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"exported {len(index)} missions to {OUT}")
