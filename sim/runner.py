@@ -25,6 +25,7 @@ import threading
 import time
 from pathlib import Path
 
+import export as ex
 import mission as M
 import world as wd
 from analyze import SUCCESS
@@ -81,12 +82,17 @@ def advance(s, mode, outcome):
 
 
 def prune(keep_runs):
-    """Old flights leave the disk: at three minutes a flight this grows for ever."""
+    """Old flights leave the disk: at three minutes a flight this grows for ever.
+
+    By the same rule the page uses, so the opening missions survive here too: it
+    would be pointless to pin them in the index and then delete the files."""
     runs = sorted(M.RUNS.glob("*-L*-s*.json"), key=lambda p: p.stat().st_mtime)
-    for old in runs[:-keep_runs]:
+    kept = {p.name for p in ex.select(runs, keep_runs)}
+    gone = [p for p in runs if p.name not in kept]
+    for old in gone:
         old.unlink()
-    if len(runs) > keep_runs:
-        log(f"pruned {len(runs) - keep_runs} old flights, {keep_runs} kept on disk")
+    if gone:
+        log(f"pruned {len(gone)} old flights, {len(kept)} kept on disk")
 
 
 def publish(keep):

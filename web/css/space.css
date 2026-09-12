@@ -131,7 +131,7 @@ html, body { margin: 0; height: 100%; background: #000; color: var(--ink); font:
 #banner .cause { max-width: 600px; margin: 12px auto 0; font-family: var(--mono); font-size: 12.5px; background: var(--panel);
 	border: 1px solid var(--faint); border-radius: 3px; padding: 10px 14px; backdrop-filter: blur(8px); }
 
-#crewNote { position: fixed; right: 22px; bottom: 206px; font-size: 10px; color: var(--dim); max-width: 300px; text-align: right; letter-spacing: 0.03em; }
+#crewNote { position: fixed; right: 22px; bottom: 206px; font-size: 10px; color: var(--dim); max-width: 300px; text-align: right; letter-spacing: 0.03em; white-space: pre-line; }
 
 @media (max-width: 1100px) {
 	#log { display: none; }

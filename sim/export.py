@@ -17,6 +17,29 @@ from analyze import SUCCESS
 from flightlog import events_for
 
 OUT = Path(__file__).resolve().parents[1] / "web" / "missions"
+FIRST_KEPT = 20                  # the opening flights of the campaign, never dropped
+
+
+def seed_of(path):
+    """The mission number out of a run's name: fly-L3-s41 -> 41."""
+    return int(path.stem.rsplit("-s", 1)[1])
+
+
+def select(runs, keep, first=FIRST_KEPT):
+    """Which flights stay published.
+
+    The newest `keep`, and on top of them the first `first` missions of the
+    campaign, always. The broadcast runs for ever, so without a cap the page
+    would grow without end; but dropping the oldest first would quietly delete
+    the beginning -- the first flight to the Moon, the first landing, the
+    flights the numbers in the README were measured on. Those are the ones worth
+    keeping longest, so they are pinned by mission number rather than by age."""
+    if not keep:
+        return list(runs)
+    newest = sorted(runs, key=lambda p: p.stat().st_mtime)[-keep:]
+    opening = sorted(runs, key=seed_of)[:first]
+    chosen = {p.name for p in newest} | {p.name for p in opening}
+    return [p for p in runs if p.name in chosen]
 
 
 def bundle(path):
@@ -54,7 +77,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--keep", type=int, default=0,
                     help="publish only the newest N flights (0 = all of them)")
-    keep = ap.parse_args().keep
+    ap.add_argument("--first", type=int, default=FIRST_KEPT,
+                    help="besides those, always publish the first N missions of the campaign")
+    a = ap.parse_args()
+    keep, first = a.keep, a.first
     OUT.mkdir(parents=True, exist_ok=True)
     # The flight bundles are rebuilt from scratch; the broadcast's own files are
     # not flights and are written by the runner on their own clocks.
@@ -64,7 +90,7 @@ def main():
             old.unlink()
     runs = sorted(M.RUNS.glob("*-L*-s*.json"))
     if keep:
-        runs = sorted(runs, key=lambda p: p.stat().st_mtime)[-keep:]
+        runs = select(runs, keep, first)
     index = []
     for p in sorted(runs):
         mode = p.name.split("-")[0]
