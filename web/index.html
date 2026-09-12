@@ -23,10 +23,22 @@
 	</div>
 </header>
 
+
+<div id="boot">
+	<div class="logo">FLY-<b>X</b></div>
+	<div class="boot-bar"><b></b></div>
+	<div class="boot-txt">loading the flight</div>
+</div>
+
 <div id="live"><i></i><span id="liveTxt">REPLAY</span></div>
 <div id="score"></div>
 
 <nav id="controls">
+	<span id="broadcast">
+		<button id="liveBtn" title="watch the scheduled launch, in step with everyone else">LIVE</button>
+		<span class="bsub"><span id="liveState">NEXT IN</span> <b id="liveTimer">--:--</b></span>
+	</span>
+	<span class="sep"></span>
 	<select id="missionSel"></select>
 	<button id="play" title="pause (space)">❚❚</button>
 	<button data-speed="1" class="on">1×</button>

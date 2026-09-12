@@ -32,6 +32,7 @@ HERE = Path(__file__).resolve().parent
 STATE = M.RUNS / "campaign.json"
 BLIND_EVERY = 10
 KEEP_DEFAULT = 120
+SLOT_S = 600                     # a launch goes out every ten minutes, on the clock
 
 
 def load_state():
@@ -96,6 +97,24 @@ def publish(keep):
         log(out.stdout.strip() or "exported")
 
 
+def announce(mission_id):
+    """The broadcast schedule: launches happen on a fixed grid of slots, so every
+    viewer starts the same flight on the same second, and between launches the
+    page counts down to the next one. The flight itself was computed earlier --
+    the page says so."""
+    web = HERE.parent / "web" / "missions"
+    web.mkdir(parents=True, exist_ok=True)
+    now = int(time.time())
+    anchor = now - now % SLOT_S
+    (web / "live.json").write_text(json.dumps({
+        "interval_s": SLOT_S,
+        "anchor": anchor,
+        "next": anchor + SLOT_S,
+        "mission": mission_id,
+        "generated": now,
+    }), encoding="utf-8")
+
+
 def fly_one(keep):
     s = load_state()
     mode, level, seed = next_mission(s)
@@ -106,6 +125,7 @@ def fly_one(keep):
     save_state(advance(s, mode, result["outcome"]))
     prune(keep * 5)                                 # keep more on disk than on the page
     publish(keep)
+    announce(f"{mode}-L{level}-s{seed}")
     return result
 
 

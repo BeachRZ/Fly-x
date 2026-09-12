@@ -27,8 +27,21 @@ On touchdown the leg sensors drive 2,522 leg mechanosensory neurons of the fly (
 
 ## Levels
 
-1. **Moon** — 8 dark asteroids along the way, 6 meteors (up to 30% of the Moon's light, fading with distance), fuel for 48 s of burn.
-2. **Mars** — new moon, Mars much dimmer than the Moon, a belt of 12 asteroids, 8 meteors, fuel for 62 s.
+The campaign starts at the Moon. Land, and the next flight goes one level
+further; fail twice in a row, and it drops back. Each level is further out, its
+target is dimmer, and the way to it is busier.
+
+| level | target | distance | rocks | meteors | fuel |
+|---|---|---|---|---|---|
+| 1 | Moon | 1000 | 8 | 6 | 48 s |
+| 2 | Mars | 1700 | 12 | 8 | 62 s |
+| 3 | Ceres | 2300 | 18 | 10 | 80 s |
+| 4 | Europa | 2900 | 20 | 12 | 96 s |
+| 5 | Titan | 3500 | 24 | 14 | 112 s |
+
+A perfect autopilot that ignores the rocks lands on 70% of Moon flights and 50%
+of Titan flights, which is the difficulty the fly is up against before its own
+steering is taken into account.
 
 ## Outcomes (decided by the simulation)
 

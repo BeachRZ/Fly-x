@@ -72,6 +72,72 @@ async function refreshIndex() {
 	}
 }
 
+/* ---------------- the broadcast ----------------
+ *
+ * Launches go out on a fixed grid of slots kept by the server, so everyone
+ * watching sees the same flight at the same second. Between launches the page
+ * counts down to the next one. The flight itself was computed earlier -- the
+ * badge under the logo says how long ago. */
+const LIVE = { interval_s: 600, anchor: 0, next: 0, mission: null, skew: 0, on: false };
+
+async function fetchLive() {
+	const res = await fetch(`missions/live.json?t=${Date.now()}`, { cache: 'no-store' });
+	if (!res.ok) throw new Error('no live.json');
+	const data = await res.json();
+	const date = res.headers.get('date');
+	if (date) LIVE.skew = new Date(date).getTime() - Date.now();     // our clock against the server's
+	Object.assign(LIVE, data);
+	return data;
+}
+
+const serverNow = () => (Date.now() + LIVE.skew) / 1000;
+
+async function joinLive() {
+	try {
+		await fetchLive();
+	} catch (err) {
+		$('liveState').textContent = 'BROADCAST OFFLINE';
+		$('liveTimer').textContent = '--:--';
+		return;
+	}
+	if (!LIVE.mission || !index.some((m) => m.id === LIVE.mission)) return;
+	await loadMission(LIVE.mission);
+	/* start where the broadcast already is */
+	const elapsed = serverNow() - LIVE.anchor;
+	if (elapsed < PREROLL) {
+		preroll = PREROLL - elapsed;
+		spoken = Math.ceil(preroll) + 1;
+	} else {
+		preroll = 0;
+		t = Math.min(rows[rows.length - 1].t, rows[0].t + (elapsed - PREROLL));
+	}
+	playing = true;
+	$('play').textContent = '❚❚';
+}
+
+function setLive(on) {
+	LIVE.on = on;
+	$('liveBtn').classList.toggle('on', on);
+	if (on) joinLive();
+}
+
+let lastSlot = 0;
+function liveTick() {
+	if (!LIVE.next) return;
+	const now = serverNow();
+	if (now >= LIVE.next) {                       // a new slot started
+		if (LIVE.on && lastSlot !== LIVE.next) { lastSlot = LIVE.next; joinLive(); }
+		else fetchLive().catch(() => {});
+		return;
+	}
+	const left = Math.max(0, LIVE.next - now);
+	const mm = String(Math.floor(left / 60)).padStart(2, '0');
+	const ss = String(Math.floor(left % 60)).padStart(2, '0');
+	$('liveTimer').textContent = `${mm}:${ss}`;
+	const flying = LIVE.on && endedAt === null;
+	$('liveState').textContent = flying ? 'ON AIR · NEXT IN' : 'NEXT LAUNCH IN';
+}
+
 function buildList() {
 	const sel = $('missionSel');
 	const chosen = sel.value;
@@ -87,7 +153,7 @@ function buildList() {
 		groups[key].append(o);
 	}
 	if (chosen && index.some((m) => m.id === chosen)) sel.value = chosen;
-	sel.onchange = () => loadMission(sel.value);
+	sel.onchange = () => { setLive(false); loadMission(sel.value); };
 }
 
 async function loadIndex() {
@@ -96,6 +162,9 @@ async function loadIndex() {
 	buildList();
 	renderScore();
 	setInterval(refreshIndex, INDEX_POLL_MS);
+	await fetchLive().catch(() => {});
+	setInterval(liveTick, 1000);
+	liveTick();
 
 	/* ?mission=fly-L1-s3&t=12&cam=cockpit&paused=1&auto=0 -- open a given moment,
 	 * for screenshots and for sharing a clip of one flight. */
@@ -439,7 +508,7 @@ function nextMission() {
 /* ---------------- loop ---------------- */
 
 const clock = new THREE.Clock();
-let lastHud = 0, lastEye = 0, lastBrain = 0;
+let lastHud = 0, lastEye = 0, lastBrain = 0, booted = false;
 
 function frame() {
 	requestAnimationFrame(frame);
@@ -477,7 +546,8 @@ function frame() {
 		}
 		revealLog();
 		if (t >= tEnd && endedAt === null) { endedAt = now; finish(); }
-		if (endedAt !== null && $('auto').checked && now - endedAt > 9000) nextMission();
+		if (endedAt !== null && $('auto').checked && !LIVE.on && now - endedAt > 9000) nextMission();
+		if (!booted) { booted = true; $('boot').classList.add('gone'); setTimeout(() => $('boot').remove(), 900); }
 	}
 	view.render();
 }
@@ -486,6 +556,7 @@ function frame() {
 
 $('play').onclick = () => { playing = !playing; $('play').textContent = playing ? '❚❚' : '▶'; };
 $('restart').onclick = () => mission && loadMission(mission.id);
+$('liveBtn').onclick = () => { audio.unlock(); setLive(!LIVE.on); };
 $('rulesBtn').onclick = () => {
 	$('rules').hidden = !$('rules').hidden;
 	$('rulesBtn').classList.toggle('on', !$('rules').hidden);

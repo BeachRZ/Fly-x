@@ -90,6 +90,23 @@ LEVELS = {
         "fuel_s": 62.0, "mission_s": 95.0,
         "asteroids": 12, "ast_r": (2.0, 7.0), "ast_band": (0.35, 0.70), "ast_spread": 110.0,
         "meteors": 8, "meteor_k": 0.3},
+    # Further out the target is dimmer and the way is busier, so the pilot has
+    # less light to steer by and more that can end the flight.
+    3: {"name": "Ceres", "key": "ceres", "dist": 2300.0, "radius": 26.0, "gm": 0.02 * GM_EARTH,
+        "color": (170, 164, 154), "surface": (96, 92, 86), "offset_deg": (10, 28),
+        "fuel_s": 80.0, "mission_s": 115.0,
+        "asteroids": 18, "ast_r": (2.0, 7.0), "ast_band": (0.30, 0.85), "ast_spread": 120.0,
+        "meteors": 10, "meteor_k": 0.3},
+    4: {"name": "Europa", "key": "europa", "dist": 2900.0, "radius": 24.0, "gm": 0.025 * GM_EARTH,
+        "color": (224, 232, 242), "surface": (150, 160, 175), "offset_deg": (10, 26),
+        "fuel_s": 96.0, "mission_s": 135.0,
+        "asteroids": 20, "ast_r": (2.0, 8.0), "ast_band": (0.25, 0.85), "ast_spread": 130.0,
+        "meteors": 12, "meteor_k": 0.32},
+    5: {"name": "Titan", "key": "titan", "dist": 3500.0, "radius": 28.0, "gm": 0.03 * GM_EARTH,
+        "color": (212, 148, 72), "surface": (120, 85, 45), "offset_deg": (8, 24),
+        "fuel_s": 112.0, "mission_s": 155.0,
+        "asteroids": 24, "ast_r": (2.0, 8.0), "ast_band": (0.22, 0.86), "ast_spread": 140.0,
+        "meteors": 14, "meteor_k": 0.35},
 }
 
 AST_COLOR = (16, 15, 14)         # dark rock, faintly lit by the Earth

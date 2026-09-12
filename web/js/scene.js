@@ -504,16 +504,19 @@ function makeTarget(lvl, eye) {
 	const group = new THREE.Group();
 	const T = new THREE.Vector3(lvl.target[0], lvl.target[1], 0);
 	group.position.copy(T);
-	const R = lvl.R, mars = lvl.key === 'mars';
+	const R = lvl.R, key = lvl.key, warm = key === 'mars' || key === 'titan';
 	const body = new THREE.Mesh(new THREE.SphereGeometry(R, 192, 96),
-		new THREE.MeshLambertMaterial({ map: bodyTexture(mars), emissive: mars ? 0x1a0a05 : 0x1c1c1a }));
+		new THREE.MeshLambertMaterial({ map: bodyTexture(key), emissive: warm ? 0x1a0a05 : 0x1c1c1a }));
 	body.rotation.x = Math.PI / 2;
 	group.add(body);
+	const HALO = { moon: ['rgba(255,250,230,0.55)', 6], mars: ['rgba(255,150,110,0.45)', 4],
+		ceres: ['rgba(240,238,230,0.32)', 3.4], europa: ['rgba(225,240,255,0.5)', 4.4],
+		titan: ['rgba(255,180,90,0.42)', 4] };
+	const [haloColor, haloScale] = HALO[key] || HALO.moon;
 	const halo = new THREE.Sprite(new THREE.SpriteMaterial({
-		map: radialTexture(mars ? 'rgba(255,150,110,0.45)' : 'rgba(255,250,230,0.55)'), transparent: true,
-		depthWrite: false, blending: THREE.AdditiveBlending,
+		map: radialTexture(haloColor), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
 	}));
-	halo.scale.setScalar(R * (mars ? 4 : 6));
+	halo.scale.setScalar(R * haloScale);
 	group.add(halo);
 
 	/* the landing zone: a detailed patch round the pad, in the flight plane */
@@ -531,7 +534,7 @@ function makeTarget(lvl, eye) {
 		P.setXYZ(i, p.x, p.y, p.z);
 	}
 	geo.computeVertexNormals();
-	const zone = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: regolithTexture(mars), transparent: true, alphaMap: fadeTexture(), depthWrite: false }));
+	const zone = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: regolithTexture(key), transparent: true, alphaMap: fadeTexture(), depthWrite: false }));
 	group.add(zone);
 
 	/* the pad: lit ring, landing mark */
@@ -561,7 +564,8 @@ function makeTarget(lvl, eye) {
 	const slopeAt = (arc) => Math.abs(arc) <= eye.PAD_R ? 0 : eye.SLOPE_AMP * Math.abs(0.6 * Math.sin(arc / l1 + p1) + 0.4 * Math.sin(arc / l2 + p2));
 	const rnd = mulberry32(lvl.level * 1000 + Math.round(lvl.pad_phi * 1000));
 	const rockGeo = new THREE.DodecahedronGeometry(1, 1);
-	const rocks = new THREE.InstancedMesh(rockGeo, new THREE.MeshLambertMaterial({ color: mars ? 0x7a4a36 : 0x77756f, flatShading: true }), 1500);
+	const ROCK = { moon: 0x77756f, mars: 0x7a4a36, ceres: 0x6d6a64, europa: 0xaebccd, titan: 0x8a6334 };
+	const rocks = new THREE.InstancedMesh(rockGeo, new THREE.MeshLambertMaterial({ color: ROCK[key] || 0x77756f, flatShading: true }), 1500);
 	const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3();
 	let n = 0;
 	for (let tries = 0; n < 1500 && tries < 12000; tries++) {
@@ -588,33 +592,55 @@ function makeTarget(lvl, eye) {
 	};
 }
 
-function bodyTexture(mars) {
+/* Each body gets its own palette: base, mottling, dark regions, crater rims. */
+const BODY_PAINT = {
+	moon: { seed: 11, base: '#9c9b96', mottle: [120, 120, 118, 60], dark: '58,58,62', rim: '235,235,230', pit: '40,40,44', caps: false },
+	mars: { seed: 23, base: '#b5603a', mottle: [120, 50, 30, 80], dark: '70,35,25', rim: '240,170,130', pit: '60,25,15', caps: true },
+	ceres: { seed: 31, base: '#8e8a84', mottle: [110, 106, 100, 55], dark: '52,50,48', rim: '225,222,214', pit: '38,36,34', caps: false },
+	europa: { seed: 47, base: '#dfe7f1', mottle: [200, 214, 232, 40], dark: '150,168,190', rim: '255,255,255', pit: '120,140,165', caps: true, cracks: true },
+	titan: { seed: 59, base: '#c98a3f', mottle: [150, 100, 45, 70], dark: '110,70,30', rim: '245,205,150', pit: '90,58,24', caps: false },
+};
+
+function bodyTexture(key) {
+	const P = BODY_PAINT[key] || BODY_PAINT.moon;
 	const W = 2048, H = 1024;
 	const c = document.createElement('canvas');
 	c.width = W; c.height = H;
 	const g = c.getContext('2d');
-	const rnd = mulberry32(mars ? 23 : 11);
-	g.fillStyle = mars ? '#b5603a' : '#9c9b96';
+	const rnd = mulberry32(P.seed);
+	g.fillStyle = P.base;
 	g.fillRect(0, 0, W, H);
 	for (let k = 0; k < 900; k++) {                        // mottling
-		g.fillStyle = mars ? `rgba(${120 + rnd() * 80},${50 + rnd() * 40},${30 + rnd() * 20},0.18)` : `rgba(${120 + rnd() * 60},${120 + rnd() * 60},${118 + rnd() * 60},0.12)`;
+		const [r0, g0, b0, spread] = P.mottle;
+		g.fillStyle = `rgba(${r0 + rnd() * spread},${g0 + rnd() * spread},${b0 + rnd() * spread},0.15)`;
 		g.beginPath(); g.arc(rnd() * W, rnd() * H, 8 + rnd() * 60, 0, Math.PI * 2); g.fill();
 	}
 	for (let k = 0; k < 22; k++) {                         // maria / dark regions
-		g.fillStyle = mars ? `rgba(70,35,25,${0.2 + rnd() * 0.3})` : `rgba(58,58,62,${0.25 + rnd() * 0.25})`;
+		g.fillStyle = `rgba(${P.dark},${0.2 + rnd() * 0.3})`;
 		g.beginPath();
 		g.ellipse(rnd() * W, H * (0.25 + rnd() * 0.5), 40 + rnd() * 110, 25 + rnd() * 60, rnd() * 3, 0, Math.PI * 2);
 		g.fill();
 	}
-	for (let k = 0; k < 700; k++) {                        // craters
+	if (P.cracks) {                                        // Europa: ice, cut by long lines
+		for (let k = 0; k < 120; k++) {
+			g.strokeStyle = `rgba(${P.pit},${0.25 + rnd() * 0.35})`;
+			g.lineWidth = 1 + rnd() * 5;
+			g.beginPath();
+			let x = rnd() * W, y = rnd() * H;
+			g.moveTo(x, y);
+			for (let s = 0; s < 5; s++) { x += (rnd() - 0.5) * 500; y += (rnd() - 0.5) * 120; g.lineTo(x, y); }
+			g.stroke();
+		}
+	}
+	for (let k = 0; k < (P.cracks ? 220 : 700); k++) {     // craters
 		const x = rnd() * W, y = rnd() * H, r = 2 + Math.pow(rnd(), 3) * 34;
-		g.fillStyle = mars ? 'rgba(60,25,15,0.3)' : 'rgba(40,40,44,0.35)';
+		g.fillStyle = `rgba(${P.pit},0.32)`;
 		g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
-		g.strokeStyle = mars ? 'rgba(240,170,130,0.25)' : 'rgba(235,235,230,0.28)';
+		g.strokeStyle = `rgba(${P.rim},0.27)`;
 		g.lineWidth = Math.max(1, r * 0.15);
 		g.beginPath(); g.arc(x - r * 0.15, y - r * 0.15, r, 0, Math.PI * 2); g.stroke();
 	}
-	if (mars) {
+	if (P.caps) {
 		g.fillStyle = 'rgba(245,240,235,0.9)';
 		g.fillRect(0, 0, W, 50);
 		g.fillRect(0, H - 40, W, 40);
@@ -625,17 +651,26 @@ function bodyTexture(mars) {
 	return t;
 }
 
-function regolithTexture(mars) {
+const GROUND_PAINT = {
+	moon: { seed: 55, base: '#8e8d88', grain: [100, 100, 96, 90] },
+	mars: { seed: 77, base: '#a65a36', grain: [90, 40, 25, 90] },
+	ceres: { seed: 81, base: '#807c76', grain: [92, 88, 82, 80] },
+	europa: { seed: 93, base: '#cfdae8', grain: [170, 190, 215, 70] },
+	titan: { seed: 97, base: '#b07434', grain: [120, 80, 35, 80] },
+};
+
+function regolithTexture(key) {
+	const P = GROUND_PAINT[key] || GROUND_PAINT.moon;
 	const S = 1024;
 	const c = document.createElement('canvas');
 	c.width = S * 2; c.height = S;
 	const g = c.getContext('2d');
-	const rnd = mulberry32(mars ? 77 : 55);
-	g.fillStyle = mars ? '#a65a36' : '#8e8d88';
+	const rnd = mulberry32(P.seed);
+	g.fillStyle = P.base;
 	g.fillRect(0, 0, S * 2, S);
 	for (let k = 0; k < 9000; k++) {
-		const v = rnd();
-		g.fillStyle = mars ? `rgba(${90 + v * 90},${40 + v * 50},${25 + v * 30},0.35)` : `rgba(${100 + v * 90},${100 + v * 90},${96 + v * 90},0.3)`;
+		const v = rnd(), [r0, g0, b0, spread] = P.grain;
+		g.fillStyle = `rgba(${r0 + v * spread},${g0 + v * spread},${b0 + v * spread},0.32)`;
 		g.fillRect(rnd() * S * 2, rnd() * S, 1 + rnd() * 5, 1 + rnd() * 5);
 	}
 	for (let k = 0; k < 500; k++) {
