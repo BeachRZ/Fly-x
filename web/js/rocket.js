@@ -526,7 +526,7 @@ function nameTexture() {
 	g.font = '900 118px "Arial Black", "Segoe UI", sans-serif';
 	g.textAlign = 'center';
 	g.textBaseline = 'middle';
-	g.fillText('FLY X', 0, 6);
+	g.fillText('FLY-X', 0, 6);
 	const t = new THREE.CanvasTexture(c);
 	t.colorSpace = THREE.SRGBColorSpace;
 	return t;

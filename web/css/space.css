@@ -16,7 +16,7 @@ html, body { margin: 0; height: 100%; background: #000; color: var(--ink); font:
 /* brand */
 #brand { position: fixed; top: 20px; left: 26px; display: flex; gap: 18px; align-items: center; pointer-events: none; }
 .logo { font: 900 34px/1 var(--sans); letter-spacing: 0.1em; }
-.logo b { color: var(--red); margin-left: 0.2em; font-weight: 900; }
+.logo b { color: var(--red); font-weight: 900; }
 .mission { border-left: 1px solid var(--faint); padding-left: 16px; letter-spacing: 0.14em; font-size: 13px; font-weight: 600; }
 .mission .sub { font-size: 11px; letter-spacing: 0.06em; font-weight: 400; color: var(--dim); margin-top: 2px; }
 .tag { color: var(--red); }

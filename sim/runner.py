@@ -1,0 +1,119 @@
+"""The broadcast: fly one mission after another, for ever.
+
+Missions are picked by a published rule, not by hand:
+
+  * every mission is a level and a number; the number only ever goes up, so
+    nobody can pick a lucky seed -- mission 37 of level 1 is the same world for
+    everyone who runs it;
+  * the campaign starts at the Moon. Land, and the next flight goes one level
+    further; fail twice in a row, and it drops back a level;
+  * every tenth flight is the blind control -- the same brain with the window
+    painted over -- flown at the current level. It never changes the campaign,
+    it only keeps the scoreboard honest.
+
+State lives in runs/campaign.json, so a restart continues where it stopped.
+
+    python runner.py                 fly for ever
+    python runner.py --once          one mission, then stop
+    python runner.py --keep 120      how many flights stay published
+"""
+import argparse
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import mission as M
+import world as wd
+from analyze import SUCCESS
+
+HERE = Path(__file__).resolve().parent
+STATE = M.RUNS / "campaign.json"
+BLIND_EVERY = 10
+KEEP_DEFAULT = 120
+
+
+def load_state():
+    if STATE.exists():
+        return json.loads(STATE.read_text())
+    return {"flights": 0, "level": 1, "fails_in_row": 0, "next_seed": 1}
+
+
+def save_state(s):
+    STATE.parent.mkdir(parents=True, exist_ok=True)
+    STATE.write_text(json.dumps(s, indent=1))
+
+
+def log(msg):
+    line = f"{time.strftime('%Y-%m-%d %H:%M:%S')} {msg}"
+    print(line, flush=True)
+    with (M.RUNS / "runner.log").open("a", encoding="utf-8") as f:
+        f.write(line + "\n")
+
+
+def next_mission(s):
+    """What to fly now: the campaign level, or the blind control every tenth."""
+    blind = (s["flights"] + 1) % BLIND_EVERY == 0
+    return ("blind" if blind else "fly"), s["level"], s["next_seed"]
+
+
+def advance(s, mode, outcome):
+    s["flights"] += 1
+    s["next_seed"] += 1
+    if mode == "blind":
+        return s                                   # the control never moves the campaign
+    if outcome in SUCCESS:
+        s["fails_in_row"] = 0
+        if s["level"] + 1 in wd.LEVELS:
+            s["level"] += 1
+            log(f"campaign: landed, moving up to level {s['level']} ({wd.LEVELS[s['level']]['name']})")
+    else:
+        s["fails_in_row"] += 1
+        if s["fails_in_row"] >= 2 and s["level"] > 1:
+            s["level"] -= 1
+            s["fails_in_row"] = 0
+            log(f"campaign: two failures, dropping back to level {s['level']} ({wd.LEVELS[s['level']]['name']})")
+    return s
+
+
+def publish(keep):
+    """Rebuild the bundles the site serves, keeping the newest `keep` flights."""
+    out = subprocess.run([sys.executable, str(HERE / "export.py"), "--keep", str(keep)],
+                         cwd=HERE, capture_output=True, text=True)
+    if out.returncode != 0:
+        log(f"export failed: {out.stderr.strip()[:400]}")
+    else:
+        log(out.stdout.strip() or "exported")
+
+
+def fly_one(keep):
+    s = load_state()
+    mode, level, seed = next_mission(s)
+    log(f"flight {s['flights'] + 1}: {mode} mission {seed}, level {level} ({wd.LEVELS[level]['name']})")
+    t0 = time.time()
+    result = M.fly_mission(mode, seed, level, save_frames=False)
+    log(f"  -> {result['outcome']} at T+{result['t']:.1f} in {time.time() - t0:.0f}s wall")
+    save_state(advance(s, mode, result["outcome"]))
+    publish(keep)
+    return result
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--once", action="store_true")
+    ap.add_argument("--keep", type=int, default=KEEP_DEFAULT)
+    a = ap.parse_args()
+    log(f"runner started (keeping the newest {a.keep} flights published)")
+    while True:
+        try:
+            fly_one(a.keep)
+        except Exception as e:                      # a bad flight must not stop the broadcast
+            log(f"flight failed: {type(e).__name__}: {e}")
+            time.sleep(20)
+        if a.once:
+            return
+
+
+if __name__ == "__main__":
+    main()

@@ -478,7 +478,7 @@ function vabTexture(lights = false) {
 	g.fillStyle = lights ? '#ff2a30' : '#d4202a';
 	g.font = '900 64px "Arial Black", sans-serif';
 	g.textAlign = 'center';
-	g.fillText('FLY X', 128, 150);
+	g.fillText('FLY-X', 128, 150);
 	const t = new THREE.CanvasTexture(c);
 	t.colorSpace = THREE.SRGBColorSpace;
 	return t;

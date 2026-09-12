@@ -7,6 +7,7 @@ to redraw the pilot's window by the same rule the retina saw it.
 
     python export.py        -> web/missions/<id>.json and index.json
 """
+import argparse
 import json
 from pathlib import Path
 
@@ -50,11 +51,18 @@ def bundle(path):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--keep", type=int, default=0,
+                    help="publish only the newest N flights (0 = all of them)")
+    keep = ap.parse_args().keep
     OUT.mkdir(parents=True, exist_ok=True)
     for old in OUT.glob("*.json"):
         old.unlink()
+    runs = sorted(M.RUNS.glob("*-L*-s*.json"))
+    if keep:
+        runs = sorted(runs, key=lambda p: p.stat().st_mtime)[-keep:]
     index = []
-    for p in sorted(M.RUNS.glob("*-L*-s*.json")):
+    for p in sorted(runs):
         mode = p.name.split("-")[0]
         if mode not in ("fly", "blind"):
             continue
