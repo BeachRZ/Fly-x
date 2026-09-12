@@ -522,11 +522,17 @@ function nameTexture() {
 	const g = c.getContext('2d');
 	g.translate(80, 256);
 	g.rotate(-Math.PI / 2);
-	g.fillStyle = '#d4202a';
 	g.font = '900 118px "Arial Black", "Segoe UI", sans-serif';
-	g.textAlign = 'center';
+	g.textAlign = 'left';
 	g.textBaseline = 'middle';
-	g.fillText('FLY-X', 0, 6);
+	/* "FLY-" white, "X" red, the same as the logo on the page */
+	const head = 'FLY-', mark = 'X';
+	const wHead = g.measureText(head).width, wMark = g.measureText(mark).width;
+	const x0 = -(wHead + wMark) / 2;
+	g.fillStyle = '#ffffff';
+	g.fillText(head, x0, 6);
+	g.fillStyle = '#d4202a';
+	g.fillText(mark, x0 + wHead, 6);
 	const t = new THREE.CanvasTexture(c);
 	t.colorSpace = THREE.SRGBColorSpace;
 	return t;

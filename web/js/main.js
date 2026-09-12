@@ -52,9 +52,29 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 /* ---------------- loading ---------------- */
 
-async function loadIndex() {
-	index = await (await fetch('missions/index.json')).json();
+/* The broadcast keeps computing: check for new flights now and then, so a page
+ * left open picks them up without a reload. */
+const INDEX_POLL_MS = 60000;
+
+async function fetchIndex() {
+	return (await fetch(`missions/index.json?t=${Date.now()}`, { cache: 'no-store' })).json();
+}
+
+async function refreshIndex() {
+	try {
+		const fresh = await fetchIndex();
+		if (fresh.length === index.length && fresh[fresh.length - 1]?.id === index[index.length - 1]?.id) return;
+		index = fresh;
+		buildList();
+		renderScore();
+	} catch (err) {
+		console.warn('index refresh failed', err);
+	}
+}
+
+function buildList() {
 	const sel = $('missionSel');
+	const chosen = sel.value;
 	sel.innerHTML = '';
 	/* The seeing fly is the show; blind flights are the control, grouped apart. */
 	const groups = {};
@@ -66,8 +86,16 @@ async function loadIndex() {
 		o.textContent = `mission ${m.seed} · ${OUTCOME_SHORT[m.outcome] || m.outcome}`;
 		groups[key].append(o);
 	}
+	if (chosen && index.some((m) => m.id === chosen)) sel.value = chosen;
 	sel.onchange = () => loadMission(sel.value);
+}
+
+async function loadIndex() {
+	index = await fetchIndex();
+	const sel = $('missionSel');
+	buildList();
 	renderScore();
+	setInterval(refreshIndex, INDEX_POLL_MS);
 
 	/* ?mission=fly-L1-s3&t=12&cam=cockpit&paused=1&auto=0 -- open a given moment,
 	 * for screenshots and for sharing a clip of one flight. */
