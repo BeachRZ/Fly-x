@@ -128,6 +128,25 @@ def is_pool(rpc, addr, token):
     return False
 
 
+def launch_recipient(rpc, token):
+    """Where the supply was minted. On a launchpad that is the bonding curve, which
+    holds everything unsold. It never changes, so it is cached once found."""
+    cache = RUNS / f"launch-{token}.json"
+    if cache.exists():
+        return json.loads(cache.read_text())["to"]
+    try:
+        logs = rpc.call("eth_getLogs", [{"fromBlock": "0x0", "toBlock": "latest", "address": token,
+                                         "topics": [TRANSFER, "0x" + "0" * 64]}])
+    except RpcError:
+        return None
+    if not logs:
+        return None
+    to = "0x" + logs[0]["topics"][2][-40:]
+    RUNS.mkdir(parents=True, exist_ok=True)
+    cache.write_text(json.dumps({"token": token, "to": to}))
+    return to
+
+
 def role_of(addr_obj):
     """What this address is, as far as the chain says: a name if it has one."""
     names = [addr_obj.get("name")] + [i.get("name") for i in (addr_obj.get("implementations") or [])]
@@ -267,12 +286,15 @@ def crew(token=None, seats=SEATS):
     info = token_info(token)
     supply = int(info["total_supply"] or 0)
     rpc = Rpc()
+    launch = launch_recipient(rpc, token)
     seated, dropped = [], []
     for h in from_explorer(token):
         role = (h["name"] or "").lower()
         why = None
         if h["address"] in (token, ZERO, DEAD):
             why = "the token contract"
+        elif h["is_contract"] and h["address"] == launch:
+            why = "the launch curve"
         elif any(w in role for w in NOT_A_PASSENGER):
             why = h["name"]
         elif h["is_contract"] and is_pool(rpc, h["address"], token):

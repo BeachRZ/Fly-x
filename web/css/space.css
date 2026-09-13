@@ -66,11 +66,14 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 /* :hover sticks to the last tap on a touchscreen */
 @media (hover: hover) {
 	#controls button:hover { border-color: var(--faint); }
+	#controls a.social:hover { color: var(--ink); }
 	.tabs button:hover { color: var(--ink); }
 }
 #controls button.on { border-color: var(--ink); }
 #controls .sep { width: 1px; height: 16px; background: var(--faint); margin: 0 4px; }
 #controls label { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); display: flex; gap: 4px; align-items: center; }
+#controls a.social { display: flex; align-items: center; padding: 4px 7px; color: var(--dim); border-radius: 2px; }
+#controls a.social svg { width: 14px; height: 14px; fill: currentColor; }
 
 /* Wide screens: the bar is shrink-to-fit, so it only ever scrolls on a screen
  * too narrow to hold it -- where it used to run under the logo and off the
@@ -293,6 +296,7 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 	#controls button, #liveBtn { min-height: 34px; padding-inline: 10px; }
 	#controls select { min-height: 34px; font-size: 16px; max-width: 42vw; }
 	#controls label { min-height: 34px; }
+	#controls a.social { min-height: 34px; padding-inline: 10px; }
 	#controls input[type="checkbox"] { width: 16px; height: 16px; }
 	.tabs button { min-height: 28px; }
 }
