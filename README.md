@@ -11,6 +11,8 @@ light. Everything else follows from that.
 A control fly flies alongside, always: same brain, same world, same computation,
 but the window is painted over. It never lands.
 
+![FLY-X on the launch pad](docs/images/start.jpg)
+
 ---
 
 ## What is in this repository
@@ -122,6 +124,8 @@ The rule is the same in every mode, the blind one included.
 
 ## The lever: the only channel of control
 
+![The pilot in the cockpit, holding the two levers](docs/images/cockpit.jpg)
+
 The fly has a pair of large descending neurons, **DNp20**, left and right; in a
 real fly they take part in turning the body. The reading is taken like this:
 
@@ -205,6 +209,8 @@ slope under the legs. More than 6 u/s down and the legs fail. A slope above 12°
 or sideways speed above 2 u/s and the rocket goes over. Otherwise it stands;
 inside a circle of radius 3 units that is a landing on the pad, outside it a
 landing off it.
+
+![FLY-X standing on the Moon](docs/images/on_moon.jpg)
 
 ---
 
