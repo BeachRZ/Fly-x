@@ -104,13 +104,41 @@ def _explorer_get(path, params=None, tries=5):
     raise RuntimeError(f"explorer {path} -> {last}")
 
 
+def _abi_string(hexdata):
+    if not hexdata or hexdata == "0x":
+        return None
+    b = bytes.fromhex(hexdata[2:])
+    if len(b) >= 64:
+        n = int.from_bytes(b[32:64], "big")
+        if 0 < n <= len(b) - 64:
+            return b[64:64 + n].decode("utf-8", "replace")
+    return b.rstrip(b"\0").decode("utf-8", "replace") or None
+
+
 def token_info(token=TOKEN):
-    d = _explorer_get(f"/api/v2/tokens/{token}")
-    return {"address": token, "name": d.get("name"), "symbol": d.get("symbol"),
-            "decimals": int(d.get("decimals") or 18),
-            "total_supply": d.get("total_supply"),
-            "holders": int(d.get("holders_count") or 0),
-            "price_usd": d.get("exchange_rate")}
+    """Name, symbol, decimals and supply from the contract itself, since the explorer
+    lags behind a fresh launch. Only the holder count and price are the explorer's."""
+    rpc = Rpc()
+
+    def read(selector):
+        try:
+            return rpc.call("eth_call", [{"to": token, "data": selector}, "latest"])
+        except RpcError:
+            return None
+
+    dec, sup = read("0x313ce567"), read("0x18160ddd")
+    info = {"address": token, "name": _abi_string(read("0x06fdde03")),
+            "symbol": _abi_string(read("0x95d89b41")),
+            "decimals": int(dec, 16) if dec and dec != "0x" else 18,
+            "total_supply": str(int(sup, 16)) if sup and sup != "0x" else None,
+            "holders": 0, "price_usd": None}
+    try:
+        d = _explorer_get(f"/api/v2/tokens/{token}", tries=2)
+        info["holders"] = int(d.get("holders_count") or 0)
+        info["price_usd"] = d.get("exchange_rate")
+    except RuntimeError:
+        pass
+    return info
 
 
 def is_pool(rpc, addr, token):
