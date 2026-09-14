@@ -690,6 +690,22 @@ function demoAddresses(n) {
 refreshCrew();
 setInterval(refreshCrew, CREW_REFRESH_MS);
 
+$('caCopy').addEventListener('click', async () => {
+	const addr = $('ca').dataset.addr;
+	try {
+		await navigator.clipboard.writeText(addr);
+	} catch {
+		const field = Object.assign(document.createElement('textarea'), { value: addr });
+		document.body.append(field);
+		field.select();
+		document.execCommand('copy');
+		field.remove();
+	}
+	$('caCopy').textContent = 'copied';
+	$('caCopy').classList.add('done');
+	setTimeout(() => { $('caCopy').textContent = 'copy'; $('caCopy').classList.remove('done'); }, 1500);
+});
+
 loadIndex().catch((err) => {
 	console.error(err);
 	$('stage').textContent = 'no missions/index.json — run sim/export.py';

@@ -90,8 +90,23 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 .note { font-size: 10.5px; color: var(--dim); padding: 5px 12px 2px; }
 .note.c { text-align: center; }
 
-#eyePanel { position: fixed; top: 64px; right: 22px; width: 300px; background: var(--panel); border: 1px solid var(--faint);
+#rightCol { position: fixed; top: 64px; right: 22px; width: 300px; display: flex; flex-direction: column; gap: 8px; }
+#eyePanel { background: var(--panel); border: 1px solid var(--faint);
 	border-radius: 3px; backdrop-filter: blur(8px); padding-bottom: 8px; }
+
+/* the token's contract address, with a copy button */
+#ca { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--panel);
+	border: 1px solid var(--faint); border-radius: 3px; backdrop-filter: blur(8px); }
+#ca .ca-l { color: var(--red); font: 700 10px var(--sans); letter-spacing: 0.18em; }
+#ca code { flex: 1; min-width: 0; font: 10px var(--mono); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ca { flex-wrap: wrap; row-gap: 5px; }
+#ca .ca-full { order: 3; flex-basis: 100%; }
+#caCopy { margin-left: auto; }
+#ca .ca-short { display: none; }
+#caCopy { background: transparent; color: var(--dim); border: 1px solid var(--faint); border-radius: 2px; cursor: pointer;
+	font: 700 9px var(--sans); letter-spacing: 0.14em; text-transform: uppercase; padding: 3px 7px; }
+#caCopy.done { color: var(--ink); border-color: var(--ink); }
+@media (hover: hover) { #caCopy:hover { color: var(--ink); } }
 #eye, #brainCanvas { display: block; width: 276px; height: 207px; margin: 0 12px; background: #000; border: 1px solid var(--faint); }
 #eye[hidden], #brainCanvas[hidden] { display: none; }
 .tabs { display: flex; align-items: center; gap: 2px; padding: 7px 12px 6px; }
@@ -197,8 +212,12 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 	#controls .sep { margin: 0 2px; }
 	#broadcast .bsub { font-size: 9px; letter-spacing: 0.08em; }
 
-	#eyePanel { top: calc(var(--safe-t) + 122px); right: calc(var(--safe-r) + 8px);
-		width: min(170px, 46vw); padding-bottom: 6px; }
+	#rightCol { top: calc(var(--safe-t) + 122px); right: calc(var(--safe-r) + 8px); width: min(170px, 46vw); gap: 6px; }
+	#eyePanel { padding-bottom: 6px; }
+	#ca { padding: 6px 7px; gap: 5px; }
+	#ca .ca-full { display: none; }
+	#ca .ca-short { display: inline; font-size: 9px; }
+	#ca .ca-l { font-size: 8.5px; letter-spacing: 0.1em; }
 	#eye, #brainCanvas { width: 100%; aspect-ratio: 4 / 3; height: auto; margin: 0; }
 	.tabs { padding: 6px 8px 5px; gap: 1px; }
 	.tabs button { font-size: 8px; letter-spacing: 0.1em; padding: 3px 5px; }
@@ -262,14 +281,15 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 	#controls { top: auto; bottom: calc(var(--safe-b) + 88px);
 		left: calc(var(--safe-l) + 10px); right: calc(var(--safe-r) + 174px); max-width: none; }
 	.tl-ev span { display: none; }
-	#eyePanel { top: calc(var(--safe-t) + 46px); width: 156px; }
+	#rightCol { top: calc(var(--safe-t) + 46px); width: 156px; }
+	#ca { display: none; }
 	#eyePanel .note, #eyePanel .lever, #eyePanel #leverTxt { display: none; }
 	#rules { top: calc(var(--safe-t) + 56px); max-height: calc(100dvh - var(--safe-t) - 80px); }
 }
 
 
 @media (max-width: 760px) and (max-height: 700px) and (orientation: portrait) {
-	#eyePanel { top: calc(var(--safe-t) + 122px); width: min(152px, 44vw); }
+	#rightCol { top: calc(var(--safe-t) + 122px); width: min(152px, 44vw); }
 	#eyePanel .note, #eyePanel .lever, #eyePanel #leverTxt { display: none; }
 	.gauge { width: 52px; height: 52px; }
 	.gl { font-size: 7px; }
