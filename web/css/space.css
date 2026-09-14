@@ -97,8 +97,8 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 /* the token's contract address, with a copy button */
 #ca { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--panel);
 	border: 1px solid var(--faint); border-radius: 3px; backdrop-filter: blur(8px); }
-#ca .ca-l { color: var(--red); font: 700 10px var(--sans); letter-spacing: 0.18em; }
-#ca code { flex: 1; min-width: 0; font: 10px var(--mono); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ca .ca-l { color: var(--red); font: 700 11px var(--sans); letter-spacing: 0.12em; }
+#ca code { flex: 1; min-width: 0; font: 11.5px var(--mono); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #ca { flex-wrap: wrap; row-gap: 5px; }
 #ca .ca-full { order: 3; flex-basis: 100%; }
 #caCopy { margin-left: auto; }
@@ -171,7 +171,9 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 #banner .cause { max-width: 600px; margin: 12px auto 0; font-family: var(--mono); font-size: 12.5px; background: var(--panel);
 	border: 1px solid var(--faint); border-radius: 3px; padding: 10px 14px; backdrop-filter: blur(8px); }
 
-#crewNote { position: fixed; right: 22px; bottom: 206px; font-size: 10px; color: var(--dim); max-width: 300px; text-align: right; letter-spacing: 0.03em; white-space: pre-line; }
+#crewNote { font-size: 10px; color: var(--dim); text-align: right; letter-spacing: 0.03em; white-space: pre-line; padding: 0 2px; }
+/* a short laptop screen has no room for it under the address */
+@media (max-height: 820px) { #crewNote { display: none; } }
 
 @media (max-width: 1100px) {
 	#log { display: none; }
@@ -216,8 +218,8 @@ body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 	#eyePanel { padding-bottom: 6px; }
 	#ca { padding: 6px 7px; gap: 5px; }
 	#ca .ca-full { display: none; }
-	#ca .ca-short { display: inline; font-size: 9px; }
-	#ca .ca-l { font-size: 8.5px; letter-spacing: 0.1em; }
+	#ca .ca-short { display: block; order: 3; flex-basis: 100%; font-size: 12px; }
+	#ca .ca-l { font-size: 9.5px; letter-spacing: 0.08em; }
 	#eye, #brainCanvas { width: 100%; aspect-ratio: 4 / 3; height: auto; margin: 0; }
 	.tabs { padding: 6px 8px 5px; gap: 1px; }
 	.tabs button { font-size: 8px; letter-spacing: 0.1em; padding: 3px 5px; }
